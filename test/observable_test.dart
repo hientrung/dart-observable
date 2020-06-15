@@ -14,15 +14,184 @@ main() {
       expect(l, 3);
       expect(a.value, 3);
     });
-  });
 
-  group('Test validate value', () {
     test('check value required', () {
       var a = Observable('test');
-      a.validator = ValidatorRequired();
+      a.isValid.validator = ValidatorRequired();
       expect(a.isValid.value, true);
       a.value = '';
       expect(a.isValid.value, false);
+    });
+
+    test('listen on observable, read isValid', () {
+      var a = Observable('test')..isValid.validator = ValidatorRequired();
+      var c = false;
+      a.listen(() {
+        c = a.isValid.value;
+      });
+      expect(c, true);
+      a.value = '';
+      expect(c, false);
+    });
+
+    test('listen on isValid', () {
+      var a = Observable('test')..isValid.validator = ValidatorRequired();
+      var c = false;
+      a.isValid.listen(() {
+        c = a.isValid.value;
+      });
+      expect(c, true);
+      a.value = '';
+      expect(c, false);
+    });
+
+    test('Check valid by async validator by listen on observable', () async {
+      var a = Observable('')
+        ..isValid.validator = ValidatorAsync((v) => Future.value(v == 'test'));
+      var msg = <String>[];
+      var r;
+      a.listen(() {
+        r = a.isValid.value;
+        msg.add(a.isValid.message);
+      });
+
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(r, false);
+      expect(msg,
+          [ValidatorAsync.defaultMessageAsync, ValidatorAsync.defaultMessage]);
+      await Future.delayed(Duration(milliseconds: 100));
+      msg.clear();
+      a.value = 'test';
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(r, true);
+      expect(msg, [ValidatorAsync.defaultMessageAsync, '']);
+    });
+  });
+
+  group('Computed', () {
+    test('only computed if access value', () {
+      var a = Observable(1);
+      var b = Computed(() {
+        return a.value;
+      });
+      expect(b.rebuildCount, 0);
+      b.value;
+      expect(b.rebuildCount, 1);
+    });
+
+    test('listen is async process', () async {
+      var a = Observable(1);
+      var b = Computed(() {
+        return a.value;
+      });
+      var c = 0;
+      //rebuild first time
+      b.listen(() {
+        c = a.value;
+      });
+      for (var i = 0; i < 10; i++) a.value = i;
+      //rebuild second after done for
+
+      await Future.delayed(Duration(seconds: 1));
+      expect(c, a.value);
+      expect(b.rebuildCount, 2);
+    });
+
+    test('Write value in function compute', () {
+      var a = Observable(1);
+      var b = Computed(() {
+        a.value++;
+        return a.value;
+      });
+      a.value = 2;
+
+      expect(b.value, 3);
+    });
+
+    test('only compute after rateLimit', () async {
+      var a = Observable(1);
+      var c = 0;
+      var b = Computed(() {
+        c = a.value;
+      })
+        ..rateLimit = 800
+        ..listen(() {});
+      a.value = 2;
+      expect(c, 1);
+      await Future.delayed(Duration(milliseconds: 500));
+      expect(c, 1);
+      await Future.delayed(Duration(milliseconds: 500));
+      expect(c, 2);
+      b.value; //just ignore warning
+    });
+
+    test('pause and resume', () async {
+      var a = Observable(1);
+      var b = Computed(() {
+        return a.value;
+      });
+      b.pause();
+      a.value++;
+      a.value++;
+      b.value;
+      a.value++;
+      expect(b.value, null);
+      b.resume();
+      b.value;
+      expect(b.rebuildCount, 1);
+    });
+
+    test('multi observable', () {
+      var a = Observable(1);
+      var b = Observable(1);
+      var c = Computed(() {
+        return a.value + b.value;
+      });
+      expect(c.value, 2);
+      a.value = 2;
+      expect(c.value, 3);
+      b.value = 4;
+      expect(c.value, 6);
+    });
+
+    test('nested computed', () {
+      var a = Observable(1);
+      var b = Computed(() => a.value);
+      var c = Computed(() => a.value * b.value);
+      expect(c.value, 1);
+      a.value = 2;
+      expect(c.value, 4);
+    });
+
+    test('writeable', () {
+      var a = Observable(1);
+      var b = Commission(
+          reader: () => a.value * 2, writer: (v) => a.value = v ~/ 2);
+      expect(b.value, 2);
+      b.value = 8;
+      expect(a.value, 4);
+    });
+
+    test('validation', () {
+      var a = Observable('');
+      var b = Computed(() => a.value)..isValid.validator = ValidatorRequired();
+      expect(b.isValid.value, false);
+      a.value = 'test';
+      expect(b.isValid.value, true);
+      expect(b.rebuildCount, 2);
+    });
+
+    test('listen on validation', () async {
+      var a = Observable('');
+      var b = Computed(() => a.value)..isValid.validator = ValidatorRequired();
+      var c;
+      b.isValid.listen(() {
+        c = b.isValid.value;
+      });
+      expect(c, false);
+      a.value = 'test';
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, true);
     });
   });
 }
