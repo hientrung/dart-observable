@@ -15,6 +15,20 @@ main() {
       expect(a.value, 3);
     });
 
+    test('changed observer', () async {
+      var a = Observable();
+      var b = Computed(() => a.value);
+      var c = 0;
+      b.changed(() {
+        c++;
+      });
+      expect(b.rebuildCount, 1);
+      for (var i = 0; i < 10; i++) a.value = i;
+      await Future.delayed(Duration(seconds: 1));
+      expect(b.rebuildCount, 2);
+      expect(c, 1);
+    });
+
     test('check value required', () {
       var a = Observable('test');
       a.isValid.validator = ValidatorRequired();
@@ -242,5 +256,14 @@ main() {
       a.value = 3;
       expect(c.value, 20);
     });
+  });
+
+  test('example', () async {
+    var a = Observable(0);
+    var b = Computed(() => a.value);
+    b.listen(() => print(b.value));
+    for (var i = 0; i < 10; i++) a.value = i;
+    await Future.delayed(Duration(seconds: 1));
+    print(b.rebuildCount);
   });
 }

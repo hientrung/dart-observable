@@ -70,6 +70,12 @@ class Computed<T> extends ObservableBase<T> {
     return super.listen(callback);
   }
 
+  @override
+  Subscription changed(void Function() callback) {
+    _rebuild();
+    return super.changed(callback);
+  }
+
   ///calculate to get value and depend observables
   void _rebuild() {
     if (!_hasChanged) return;
@@ -98,6 +104,7 @@ class Computed<T> extends ObservableBase<T> {
         //force rebuild for observer
         if (hasListener) {
           //use async rebuild with rate
+          _asyncRebuild?.cancel();
           _asyncRebuild = CancelableThen(
               future: Future.delayed(Duration(milliseconds: rateLimit)),
               then: (_) {
