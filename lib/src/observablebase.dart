@@ -8,7 +8,7 @@ class Subscription {
   Subscription(this.observable, this.callback);
 
   //close listen on observable
-  close() {
+  dispose() {
     observable._callbacks.remove(callback);
   }
 }

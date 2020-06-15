@@ -113,7 +113,7 @@ class Computed<T> extends ObservableBase<T> {
       _asyncRebuild.cancel();
       _asyncRebuild = null;
     }
-    for (var sub in _subscriptions) sub.close();
+    for (var sub in _subscriptions) sub.dispose();
     _depends.clear();
     _subscriptions.clear();
   }
