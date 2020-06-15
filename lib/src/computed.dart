@@ -1,7 +1,39 @@
 import 'dart:async';
 import 'observablebase.dart';
 
-///Auto compute values from some observable
+///Canncelable a callback function for Future.
+///Ofcouse, we can not cancel a Future, this is just ignore call callback [then]
+///
+///Future return null if it's canceled
+class CancelableThen<T> {
+  final Future<T> future;
+  final dynamic Function(T value) then;
+  bool _isCancel = false;
+  bool _isComplete = false;
+
+  CancelableThen({this.future, this.then})
+      : assert(future != null && then != null) {
+    future.then((value) {
+      if (!_isCancel)
+        return then(value);
+      else
+        return null;
+    });
+  }
+
+  ///Check current status is canceled or not
+  bool get isCancel => isCancel;
+
+  ///Check current status is completed or not
+  bool get isComplete => _isComplete;
+
+  ///Cancel do function callback
+  void cancel() {
+    _isCancel = true;
+  }
+}
+
+///Auto compute values from some observable by async update function
 class Computed<T> extends ObservableBase<T> {
   T _oldValue;
   T _value;
@@ -12,7 +44,7 @@ class Computed<T> extends ObservableBase<T> {
   final _subscriptions = <Subscription>[];
   var _hasChanged = true;
   final T Function() calculator;
-  StreamSubscription _subRebuild;
+  CancelableThen _asyncRebuild;
   final void Function(Object error, StackTrace stack) onError;
 
   ///Only notify change and rebuild after a number period (millisecond)
@@ -66,20 +98,20 @@ class Computed<T> extends ObservableBase<T> {
         //force rebuild for observer
         if (hasListener) {
           //use async rebuild with rate
-          _subRebuild = Future.delayed(Duration(milliseconds: rateLimit))
-              .asStream()
-              .listen((event) {
-            _rebuild();
-            notify();
-          });
+          _asyncRebuild = CancelableThen(
+              future: Future.delayed(Duration(milliseconds: rateLimit)),
+              then: (_) {
+                _rebuild();
+                notify();
+              });
         }
       }));
   }
 
   void _reset() {
-    if (_subRebuild != null) {
-      _subRebuild.cancel();
-      _subRebuild = null;
+    if (_asyncRebuild != null) {
+      _asyncRebuild.cancel();
+      _asyncRebuild = null;
     }
     for (var sub in _subscriptions) sub.close();
     _depends.clear();
