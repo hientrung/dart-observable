@@ -91,12 +91,14 @@ class ObservableValidator extends ObservableBase<bool> {
   String _oldMessage = '';
   String _message = '';
   bool _hasChanged = true;
+  dynamic _oldObsValue;
 
   ObservableValidator(this.observable)
       : assert(observable != null),
         super() {
     //insert at top list, so it can run update valid status before other listeners
     observable._callbacks.insert(0, _observableChanged);
+    _oldObsValue = observable.peek;
   }
 
   void _observableChanged() {
@@ -109,6 +111,10 @@ class ObservableValidator extends ObservableBase<bool> {
 
   @override
   bool get peek {
+    //check computed value
+    if (!_hasChanged && _oldObsValue != observable.peek) _hasChanged = true;
+
+    _oldObsValue = observable.peek;
     _update();
     return _value;
   }
