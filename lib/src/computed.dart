@@ -14,15 +14,16 @@ class CancelableThen<T> {
   CancelableThen({this.future, this.then})
       : assert(future != null && then != null) {
     future.then((value) {
-      if (!_isCancel)
+      if (!_isCancel) {
         return then(value);
-      else
+      } else {
         return null;
+      }
     });
   }
 
   ///Check current status is canceled or not
-  bool get isCancel => isCancel;
+  bool get isCancel => _isCancel;
 
   ///Check current status is completed or not
   bool get isComplete => _isComplete;
@@ -98,7 +99,7 @@ class Computed<T> extends ObservableBase<T> {
     _hasChanged = false;
 
     //new subscribes, it there are no depends then it nerver run again
-    for (var dep in _depends)
+    for (var dep in _depends) {
       _subscriptions.add(dep.changed(() {
         _hasChanged = true;
         //force rebuild for observer
@@ -113,6 +114,7 @@ class Computed<T> extends ObservableBase<T> {
               });
         }
       }));
+    }
   }
 
   void _reset() {
@@ -120,7 +122,9 @@ class Computed<T> extends ObservableBase<T> {
       _asyncRebuild.cancel();
       _asyncRebuild = null;
     }
-    for (var sub in _subscriptions) sub.dispose();
+    for (var sub in _subscriptions) {
+      sub.dispose();
+    }
     _depends.clear();
     _subscriptions.clear();
   }

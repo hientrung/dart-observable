@@ -49,7 +49,9 @@ abstract class ObservableBase<T> {
 
   ///Notify to observers are listen on this observable
   void notify() {
-    for (var cb in _callbacks) cb();
+    for (var cb in _callbacks) {
+      cb();
+    }
   }
 
   ///Create a stream to listen value changes, it should call dispose to close stream when not needed
@@ -62,7 +64,7 @@ abstract class ObservableBase<T> {
   }
 
   ///Check there are listeners on this observable
-  bool get hasListener => _callbacks.length > 0;
+  bool get hasListener => _callbacks.isNotEmpty;
 
   ///Check value has updated
   bool get modified => peek != oldValue;
@@ -166,7 +168,11 @@ class ObservableValidator extends ObservableBase<bool> {
       _value = _message.isEmpty;
       notify();
       //force all listener in observable there are change in isValid, due to it can listen in observable instead isValid
-      for (var p in observable._callbacks) if (p != _observableChanged) p();
+      for (var p in observable._callbacks) {
+        if (p != _observableChanged) {
+          p();
+        }
+      }
     }
   }
 

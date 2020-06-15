@@ -69,4 +69,4 @@ Built-in validate:
 - least: combine and check all validators but it stopped at the first invalid
 - not: negative a validator
 
-### View more details in [Wiki](https://github.com/hientrung/dart-observable/wiki)
+### View more details in [Wiki](https://github.com/hientrung/dart-observable/wiki), [API](https://pub.dev/documentation/obsobject/latest/)

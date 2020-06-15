@@ -43,7 +43,11 @@ abstract class Validator {
   ///Or return null if not found
   static String getMessage(List<String> msg) {
     assert(msg != null);
-    for (var s in msg) if (s != null && s.isNotEmpty) return s;
+    for (var s in msg) {
+      if (s != null && s.isNotEmpty) {
+        return s;
+      }
+    }
     return null;
   }
 
@@ -80,8 +84,9 @@ abstract class Validator {
   ///- Map: contains key, value corresponding with properties of Validator
   static Validator convert(Map<String, dynamic> map) {
     if (map == null || map.isEmpty) return null;
-    if (map.keys.length > 1)
+    if (map.keys.length > 1) {
       throw "Map should has one element. Use 'all' or 'least' to combine multi validators";
+    }
     var k = map.keys.first;
     var v = map[k];
     if (v == null || v.toString().isEmpty || (v is bool && !v)) return null;
@@ -112,8 +117,9 @@ abstract class Validator {
             if (type.mapping != null) type.mapping(vd, key, value);
         }
       });
-    } else
+    } else {
       throw 'Map value should be bool, String, Map';
+    }
     return vd;
   }
 
@@ -122,13 +128,14 @@ abstract class Validator {
     var result = <Validator>[];
     if (val is List) {
       for (var v in val) {
-        if (v is Validator)
+        if (v is Validator) {
           result.add(v);
-        else if (v is Map) {
+        } else if (v is Map) {
           var vd = convert(v);
           if (vd != null) result.add(convert(v));
-        } else
+        } else {
           throw 'List should contains Validator or Map';
+        }
       }
     } else if (val is Map) {
       for (var k in val.keys) {
