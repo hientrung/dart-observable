@@ -113,8 +113,6 @@ class ObservableValidator extends ObservableBase<bool> {
   bool get peek {
     //check computed value
     if (!_hasChanged && _oldObsValue != observable.peek) _hasChanged = true;
-
-    _oldObsValue = observable.peek;
     _update();
     return _value;
   }
@@ -141,6 +139,7 @@ class ObservableValidator extends ObservableBase<bool> {
   ///it can still invalid but with difference message
   void _update() {
     if (!_hasChanged || _validator == null) return;
+    _oldObsValue = observable.peek;
     _hasChanged = false;
     String s;
     runZoned(() {
