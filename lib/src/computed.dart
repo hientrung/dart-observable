@@ -6,16 +6,22 @@ import 'observablebase.dart';
 ///
 ///Future return null if it's canceled
 class CancelableThen<T> {
+  ///Future listen on
   final Future<T> future;
+
+  ///Future.then callback
   final dynamic Function(T value) then;
   bool _isCancel = false;
   bool _isComplete = false;
 
+  ///Create a async function can cancel
   CancelableThen({this.future, this.then})
       : assert(future != null && then != null) {
     future.then((value) {
       if (!_isCancel) {
-        return then(value);
+        var v = then(value);
+        _isComplete = true;
+        return v;
       } else {
         return null;
       }
@@ -44,13 +50,18 @@ class Computed<T> extends ObservableBase<T> {
   final _depends = <ObservableBase>[];
   final _subscriptions = <Subscription>[];
   var _hasChanged = true;
+
+  ///Function used to calculate value
   final T Function() calculator;
   CancelableThen _asyncRebuild;
+
+  ///Function called if there are error in procession [calculator]
   final void Function(Object error, StackTrace stack) onError;
 
   ///Only notify change and rebuild after a number period (millisecond)
   int rateLimit;
 
+  ///Create a observable that calculate value base on other observables
   Computed(this.calculator, {this.rateLimit = 0, this.onError})
       : assert(rateLimit >= 0),
         assert(calculator != null),
@@ -169,7 +180,10 @@ class Computed<T> extends ObservableBase<T> {
   static Computed<T> task<T>(
       List<ObservableBase> depends, T Function() callback) {
     return Computed(() {
-      for (var d in depends) d.value;
+      //listen all
+      for (var d in depends) {
+        d.value;
+      }
       return ignoreDependencies(callback);
     });
   }

@@ -3,19 +3,24 @@ import 'validator.dart';
 
 ///A listener on an observable, it can close listen in later
 class Subscription {
+  ///Current observable listening
   final ObservableBase observable;
+
+  ///Function will be called
   final void Function() callback;
+
+  ///Create a subscription
   Subscription(this.observable, this.callback);
 
-  //close listen on observable
-  dispose() {
+  ///close listen on observable
+  void dispose() {
     observable._callbacks.remove(callback);
   }
 }
 
 ///A base class for observable should has value and can notify to observers
 abstract class ObservableBase<T> {
-  var _callbacks = <void Function()>[];
+  final _callbacks = <void Function()>[];
   StreamController _streamer;
   ObservableValidator _isValid;
 
@@ -25,7 +30,8 @@ abstract class ObservableBase<T> {
   ///The current value but ignore check depend on in Computed context
   T get peek;
 
-  ///The current value, if value called in a computed context, it will set Computed is depend on this
+  ///The current value, if value called in a computed context,
+  ///it will set Computed is depend on this
   T get value {
     if (Zone.current['ignoreDependencies'] ?? false) return peek;
     List<ObservableBase> depends = Zone.current['computedDepends'];
@@ -35,7 +41,8 @@ abstract class ObservableBase<T> {
     return peek;
   }
 
-  ///Listen on value changed then run callback, it also run callback in first time
+  ///Listen on value changed then run callback,
+  ///it also run callback in first time
   Subscription listen(void Function() callback) {
     callback();
     return changed(callback);
@@ -54,7 +61,8 @@ abstract class ObservableBase<T> {
     }
   }
 
-  ///Create a stream to listen value changes, it should call dispose to close stream when not needed
+  ///Create a stream to listen value changes,
+  ///it should call dispose to close stream when when it is no longer needed
   Stream get stream {
     if (_streamer == null) {
       _streamer = StreamController.broadcast(sync: true);
@@ -71,7 +79,7 @@ abstract class ObservableBase<T> {
 
   ///An observable keep current status validation
   ObservableValidator get isValid {
-    if (_isValid == null) _isValid = ObservableValidator(this);
+    _isValid ??= ObservableValidator(this);
     return _isValid;
   }
 
@@ -87,6 +95,8 @@ abstract class ObservableBase<T> {
 ///Handle valid state for an observable
 class ObservableValidator extends ObservableBase<bool> {
   Validator _validator;
+
+  ///Current observable use validate
   final ObservableBase observable;
   bool _oldValue = true;
   bool _value = true;
@@ -95,10 +105,12 @@ class ObservableValidator extends ObservableBase<bool> {
   bool _hasChanged = true;
   dynamic _oldObsValue;
 
+  ///Create a observable's validation
   ObservableValidator(this.observable)
       : assert(observable != null),
         super() {
-    //insert at top list, so it can run update valid status before other listeners
+    //insert at top list, so it can run update valid status
+    //before other listeners called
     observable._callbacks.insert(0, _observableChanged);
     _oldObsValue = observable.peek;
   }
@@ -167,7 +179,8 @@ class ObservableValidator extends ObservableBase<bool> {
       _oldValue = _value;
       _value = _message.isEmpty;
       notify();
-      //force all listener in observable there are change in isValid, due to it can listen in observable instead isValid
+      //force all listener in observable there are change in isValid,
+      //due to it can listen in observable instead isValid
       for (var p in observable._callbacks) {
         if (p != _observableChanged) {
           p();

@@ -1,7 +1,7 @@
 import 'package:obsobject/obsobject.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('Default message', () {
     ValidatorRequired.defaultMessage = 'required';
     var v = ValidatorRequired();

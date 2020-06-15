@@ -1,7 +1,7 @@
 import 'package:obsobject/obsobject.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   group('Observable', () {
     test('listen change value', () {
       var a = Observable(1);
@@ -23,7 +23,9 @@ main() {
         c++;
       });
       expect(b.rebuildCount, 1);
-      for (var i = 0; i < 10; i++) a.value = i;
+      for (var i = 0; i < 10; i++) {
+        a.value = i;
+      }
       await Future.delayed(Duration(seconds: 1));
       expect(b.rebuildCount, 2);
       expect(c, 1);
@@ -103,7 +105,9 @@ main() {
       b.listen(() {
         c = a.value;
       });
-      for (var i = 0; i < 10; i++) a.value = i;
+      for (var i = 0; i < 10; i++) {
+        a.value = i;
+      }
       //rebuild second after done for
 
       await Future.delayed(Duration(seconds: 1));
@@ -262,7 +266,9 @@ main() {
     var a = Observable(0);
     var b = Computed(() => a.value);
     b.listen(() => print(b.value));
-    for (var i = 0; i < 10; i++) a.value = i;
+    for (var i = 0; i < 10; i++) {
+      a.value = i;
+    }
     await Future.delayed(Duration(seconds: 1));
     print(b.rebuildCount);
   });
