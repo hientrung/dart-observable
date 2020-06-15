@@ -17,7 +17,6 @@ class Subscription {
 abstract class ObservableBase<T> {
   var _callbacks = <void Function()>[];
   StreamController _streamer;
-  Validator _validator;
   ObservableValidator _isValid;
 
   ///The old value if has change
@@ -68,20 +67,9 @@ abstract class ObservableBase<T> {
   ///Check value has updated
   bool get modified => peek != oldValue;
 
-  ///Get current validator used to validate value
-  Validator get validator => _validator;
-
-  ///Set validator used to validate value, check its status in isValid
-  set validator(Validator v) {
-    if (_validator == v) return;
-    _validator = v;
-    _isValid?.validator = _validator;
-  }
-
   ///An observable keep current status validation
   ObservableValidator get isValid {
-    if (_isValid == null)
-      _isValid = ObservableValidator(this)..validator = _validator;
+    if (_isValid == null) _isValid = ObservableValidator(this);
     return _isValid;
   }
 
@@ -98,10 +86,10 @@ abstract class ObservableBase<T> {
 class ObservableValidator extends ObservableBase<bool> {
   Validator _validator;
   final ObservableBase observable;
-  bool _oldValue;
-  bool _value;
-  String _oldMessage;
-  String _message;
+  bool _oldValue = true;
+  bool _value = true;
+  String _oldMessage = '';
+  String _message = '';
   bool _hasChanged = true;
 
   ObservableValidator(this.observable)
@@ -129,11 +117,12 @@ class ObservableValidator extends ObservableBase<bool> {
   Validator get validator => _validator;
 
   ///Set current validator used to validate observable's value
-  ///It also forece update current status validation
+  ///It also force update, notify current status validation
   set validator(Validator val) {
+    if (_validator == val) return;
     _validator = val;
     _hasChanged = true;
-    _update();
+    if (hasListener) _update();
   }
 
   ///A current invalid message, it dosen't has null, just empty or not
@@ -147,26 +136,33 @@ class ObservableValidator extends ObservableBase<bool> {
   void _update() {
     if (!_hasChanged || _validator == null) return;
     _hasChanged = false;
-    _oldMessage = _message;
+    String s;
     runZoned(() {
-      _message = _validator.validate(observable.peek) ?? '';
+      s = _validator.validate(observable.peek) ?? '';
     }, zoneValues: {'validatorCallback': _validatorCallback});
-    _oldValue = _value;
-    _value = _message.isEmpty;
-    if (hasListener) notify();
+    if (s != _message) {
+      _oldMessage = _message;
+      _message = s;
+      _oldValue = _value;
+      _value = _message.isEmpty;
+      notify();
+    }
   }
 
   ///Function callback by ValidatorAsync, they're communicate by Zone values
   void _validatorCallback(String msg) {
     //wait for other task changed finish
     //print('Validator callback: $msg');
-    _oldMessage = _message;
-    _message = msg ?? '';
-    _oldValue = _value;
-    _value = _message.isEmpty;
-    if (hasListener) notify();
-    //force all listener in observable there are change in isValid, due to it can listen in observable instead isValid
-    for (var p in observable._callbacks) if (p != _observableChanged) p();
+    var s = msg ?? '';
+    if (s != _message) {
+      _oldMessage = _message;
+      _message = s;
+      _oldValue = _value;
+      _value = _message.isEmpty;
+      notify();
+      //force all listener in observable there are change in isValid, due to it can listen in observable instead isValid
+      for (var p in observable._callbacks) if (p != _observableChanged) p();
+    }
   }
 
   @override
@@ -177,6 +173,9 @@ class ObservableValidator extends ObservableBase<bool> {
     _update();
     return super.listen(callback);
   }
+
+  @override
+  bool get hasListener => super.hasListener || observable._callbacks.length > 1;
 
   @override
   void dispose() {
