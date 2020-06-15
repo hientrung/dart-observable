@@ -1,0 +1,14 @@
+name: obsobject
+description: >-
+  An observable object can notify value changed to observers that listen on it
+  Another observable object is a computed that auto update value based on values of other observables, computed
+  Buit-in validation for observable object.
+version: 1.0.0
+homepage: https://github.com/hientrung/dart-observable
+repository: https://github.com/hientrung/dart-observable
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+dependencies:
+
+dev_dependencies:
+  test: ^1.14.7
