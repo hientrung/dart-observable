@@ -193,5 +193,54 @@ main() {
       await Future.delayed(Duration(milliseconds: 100));
       expect(c, true);
     });
+
+    test('ignore dependencies', () {
+      var a = Observable(1);
+      var b = Computed(() {
+        return Computed.ignoreDependencies(() => a.value);
+      });
+      expect(b.value, 1);
+      a.value = 2;
+      expect(b.value, 1);
+      expect(b.dependCount, 0);
+    });
+
+    test('async in computed', () {
+      var a = Observable(3);
+      var t = 2;
+      //it get depend in Future but it return t before
+      var b = Computed(() {
+        Future.value(t).then((value) => t = value * a.value);
+        return t;
+      });
+      b.value;
+      expect(
+          Future.delayed(Duration(seconds: 0), () {
+            expect(b.value, 2);
+            expect(b.dependCount, 1); //depend on a in future
+            expect(t, 6);
+          }),
+          completes);
+    });
+
+    test('ignore depend if get value observable by .peek', () {
+      var a = Observable(1);
+      var b = Computed(() {
+        return a.peek * 10;
+      });
+      a.value++;
+      b.value;
+      a.value++;
+      //value just build when it access, so a.peek is 20 already in this case
+      expect(b.value, 20);
+      expect(b.dependCount, 0);
+      expect(b.rebuildCount, 1);
+
+      var c = Computed(() {
+        return b.value;
+      });
+      a.value = 3;
+      expect(c.value, 20);
+    });
   });
 }
