@@ -69,4 +69,34 @@ Built-in validate:
 - least: combine and check all validators but it stopped at the first invalid
 - not: negative a validator
 
+Observable has a property **isValid**, it's an observable value of validation staus, and it also has features:
+- condition: used to check something before excute validate
+- message: custom message, default message, support for localize
+- And easy way to custom or extends new validation
+
+Example:
+```dart
+//use with Validator....
+var email = Observable('')
+            ..isValid.validator = 
+                ValidatorLeast([ValidatorRequired(), ValidatorEmail()]);
+
+//use with Map data config
+var email = Observable('')
+            ..isValid.validator = 
+                Validator.convert({
+'least': {
+    'validators': {'required': 'Email is required', 'email': true}
+}
+                });
+//current status
+print(email.isValid.value);
+//current invalid message
+print(email.isValid.message);
+//listen on validation
+email.isValid.listen(() {
+//do something
+});
+```
+
 ### View more details in [Wiki](https://github.com/hientrung/dart-observable/wiki), [API](https://pub.dev/documentation/obsobject/latest/)
