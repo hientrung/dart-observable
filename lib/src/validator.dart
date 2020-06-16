@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:obsobject/src/cancelablethen.dart';
+
 ///Interface to register a subclass [Validator]
 ///to determine how to create it from a [Map] data
 class ValidatorRegister {
@@ -610,7 +612,7 @@ class ValidatorAsync extends Validator {
 
   ///A debounce time (millisecond) to run validate
   int rateLimit;
-  StreamSubscription _subValid;
+  CancelableThen _subValid;
 
   ///Create [Validator] can check value by an async function
   ValidatorAsync([this.valid]);
@@ -635,25 +637,24 @@ class ValidatorAsync extends Validator {
       _oldValue = value;
       if (onStart != null) onStart();
       _subValid?.cancel();
-
-      _subValid = Future.delayed(Duration(milliseconds: rateLimit ?? 0))
-          .asStream()
-          .listen((event) {
-        valid(value).then((v) {
-          _running = false;
-          _result = v;
-          //notify manual
-          if (onDone != null) onDone(_result);
-          //callback by Zone
-          var callback = Zone.current['validatorCallback'];
-          if (callback != null) {
-            var s = _result
-                ? null
-                : Validator.getMessage([message, defaultMessage]);
-            callback(s);
-          }
-        });
-      });
+      _subValid = CancelableThen(
+          future: Future.delayed(Duration(milliseconds: rateLimit ?? 0)),
+          then: (_) {
+            valid(value).then((v) {
+              _running = false;
+              _result = v;
+              //notify manual
+              if (onDone != null) onDone(_result);
+              //callback by Zone
+              var callback = Zone.current['validatorCallback'];
+              if (callback != null) {
+                var s = _result
+                    ? null
+                    : Validator.getMessage([message, defaultMessage]);
+                callback(s);
+              }
+            });
+          });
 
       return Validator.getMessage([messageAsync, defaultMessageAsync]);
     } else if (_running) {

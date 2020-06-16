@@ -62,7 +62,7 @@ abstract class ObservableBase<T> {
   }
 
   ///Create a stream to listen value changes,
-  ///it should call dispose to close stream when when it is no longer needed
+  ///it should call dispose to close stream when it is no longer needed
   Stream get stream {
     if (_streamer == null) {
       _streamer = StreamController.broadcast(sync: true);
