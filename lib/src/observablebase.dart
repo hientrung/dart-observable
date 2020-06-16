@@ -141,10 +141,13 @@ class ObservableValidator extends ObservableBase<bool> {
     _validator = val;
     _hasChanged = true;
     if (hasListener) _update();
+    _notifyObservable();
   }
 
   ///A current invalid message, it dosen't has null, just empty or not
   String get message {
+    //check computed value
+    if (!_hasChanged && _oldObsValue != observable.peek) _hasChanged = true;
     _update();
     return _message ?? '';
   }
@@ -179,13 +182,7 @@ class ObservableValidator extends ObservableBase<bool> {
       _oldValue = _value;
       _value = _message.isEmpty;
       notify();
-      //force all listener in observable there are change in isValid,
-      //due to it can listen in observable instead isValid
-      for (var p in observable._callbacks) {
-        if (p != _observableChanged) {
-          p();
-        }
-      }
+      _notifyObservable();
     }
   }
 
@@ -198,8 +195,15 @@ class ObservableValidator extends ObservableBase<bool> {
     return super.listen(callback);
   }
 
-  @override
-  bool get hasListener => super.hasListener || observable._callbacks.length > 1;
+  ///force all listener in observable there are change in isValid,
+  ///due to it can listen in observable instead isValid
+  void _notifyObservable() {
+    for (var p in observable._callbacks) {
+      if (p != _observableChanged) {
+        p();
+      }
+    }
+  }
 
   @override
   void dispose() {
