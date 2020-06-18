@@ -7,7 +7,7 @@ class Subscription {
   final ObservableBase observable;
 
   ///Function will be called
-  final void Function() callback;
+  final Function callback;
 
   ///Create a subscription
   Subscription(this.observable, this.callback);
@@ -20,7 +20,7 @@ class Subscription {
 
 ///A base class for observable should has value and can notify to observers
 abstract class ObservableBase<T> {
-  final _callbacks = <void Function()>[];
+  final _callbacks = <Function>[];
   StreamController _streamer;
   ObservableValidator _isValid;
 
@@ -43,13 +43,23 @@ abstract class ObservableBase<T> {
 
   ///Listen on value changed then run callback,
   ///it also run callback in first time
-  Subscription listen(void Function() callback) {
-    callback();
+  ///
+  ///Function callback can has parameters
+  ///- none
+  ///- one: the current value
+  ///- two: the current, old value
+  Subscription listen(Function callback) {
+    _executeCallback(callback);
     return changed(callback);
   }
 
   ///Listen on value changed then run callback
-  Subscription changed(void Function() callback) {
+  ///
+  ///Function callback can has parameters
+  ///- none
+  ///- one: the current value
+  ///- two: the current, old value
+  Subscription changed(Function callback) {
     _callbacks.add(callback);
     return Subscription(this, callback);
   }
@@ -57,7 +67,24 @@ abstract class ObservableBase<T> {
   ///Notify to observers are listen on this observable
   void notify() {
     for (var cb in _callbacks) {
+      _executeCallback(cb);
+    }
+  }
+
+  ///execute callback function, it can has 0, 1, 2 parameters
+  void _executeCallback(Function cb) {
+    if (cb is Function()) {
       cb();
+    } else {
+      if (cb is Function(T)) {
+        cb(peek);
+      } else {
+        if (cb is Function(T, T)) {
+          cb(peek, oldValue);
+        } else {
+          throw 'Callback function is invalid parameters';
+        }
+      }
     }
   }
 
@@ -105,7 +132,7 @@ class ObservableValidator extends ObservableBase<bool> {
   bool _hasChanged = true;
   dynamic _oldObsValue;
 
-  ///Create a observable's validation
+  ///Create a observable validation
   ObservableValidator(this.observable)
       : assert(observable != null),
         super() {
@@ -131,10 +158,10 @@ class ObservableValidator extends ObservableBase<bool> {
     return _value;
   }
 
-  ///Get current validator used to validate observable's value
+  ///Get current validator used to validate observable value
   Validator get validator => _validator;
 
-  ///Set current validator used to validate observable's value
+  ///Set current validator used to validate observable value
   ///It also force update, notify current status validation
   set validator(Validator val) {
     if (_validator == val) return;
@@ -144,7 +171,7 @@ class ObservableValidator extends ObservableBase<bool> {
     _notifyObservable();
   }
 
-  ///A current invalid message, it dosen't has null, just empty or not
+  ///A current invalid message, it doesn't has null, just empty or not
   String get message {
     //check computed value
     if (!_hasChanged && _oldObsValue != observable.peek) _hasChanged = true;
@@ -190,7 +217,7 @@ class ObservableValidator extends ObservableBase<bool> {
   bool get modified => _oldValue != _value || _oldMessage != _message;
 
   @override
-  Subscription listen(void Function() callback) {
+  Subscription listen(Function callback) {
     _update();
     return super.listen(callback);
   }
@@ -200,7 +227,7 @@ class ObservableValidator extends ObservableBase<bool> {
   void _notifyObservable() {
     for (var p in observable._callbacks) {
       if (p != _observableChanged) {
-        p();
+        _executeCallback(p);
       }
     }
   }

@@ -82,6 +82,25 @@ void main() {
       expect(r, true);
       expect(msg, [ValidatorAsync.defaultMessageAsync, '']);
     });
+
+    test('Listen with 1 parameter', () {
+      var a = Observable(1);
+      a.listen((int v) {
+        expect(v, a.value);
+      });
+      a.value = 2;
+      a.value = 3;
+    });
+
+    test('Listen with 2 parameter', () {
+      var a = Observable(1);
+      a.listen((int v, int o) {
+        expect(v, a.value);
+        expect(o, a.oldValue);
+      });
+      a.value = 2;
+      a.value = 3;
+    });
   });
 
   group('Computed', () {

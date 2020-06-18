@@ -82,7 +82,7 @@ void main() {
     var v = '';
     var a = ValidatorAll([ValidatorRequired(), ValidatorEmail()]);
     expect(a.validate(v), isNotNull);
-    v = 'test@testcom';
+    v = 'test@test-com';
     expect(a.validate(v), isNotNull);
     print(a.validate(v));
     v = 'test@test.com';
@@ -115,7 +115,7 @@ void main() {
 
   test('True', () {
     var a = ValidatorTrue();
-    expect(a.validate('asdf'), isNotNull);
+    expect(a.validate('test'), isNotNull);
     expect(a.validate(true), null);
   });
 

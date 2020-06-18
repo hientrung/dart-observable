@@ -81,7 +81,7 @@ abstract class Validator {
   ///Convert a [Map] to a [Validator], there are only one element in Map.
   ///Use 'all' or 'least' to combine multi validators.
   ///
-  ///Map [key] is a Validator name has been registerd
+  ///Map [key] is a Validator name has been registered
   ///
   ///Map [value] can be
   ///- null, empty, false: is skipped

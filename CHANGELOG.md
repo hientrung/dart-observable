@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+## 1.0.3
+Support listener function with  parameters  
+Reuse CancelableThen in ObservableValidator  
+Spell check
+
 ## 1.0.2
 
 Update follow dart analyze

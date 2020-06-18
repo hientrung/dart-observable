@@ -1,5 +1,5 @@
 # Obsobject
-An observable, computed objects written in Dart with buit-in validation
+An observable, computed objects written in Dart with built-in validation
 
 # Install 
 ```yaml
@@ -41,7 +41,7 @@ print(c.value);//result 20, depend on 'a', 'b'
 ```
 
 Computed object is only recalculate if there are listeners on it or when access to its value.  
-And the calculation is a asyn process, so observable can change value many times, but Computed just run one
+And the calculation is a async process, so observable can change value many times, but Computed just run one
 
 Example:
 ```dart
@@ -69,8 +69,8 @@ Built-in validate:
 - least: combine and check all validators but it stopped at the first invalid
 - not: negative a validator
 
-Observable has a property **isValid**, it's an observable value of validation staus, and it also has features:
-- condition: used to check something before excute validate
+Observable has a property **isValid**, it's an observable value of validation status, and it also has features:
+- condition: used to check something before execute validate
 - message: custom message, default message, support for localize
 - And easy way to custom or extends new validation
 

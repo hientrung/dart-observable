@@ -40,13 +40,13 @@ class Computed<T> extends ObservableBase<T> {
   }
 
   @override
-  Subscription listen(void Function() callback) {
+  Subscription listen(Function callback) {
     _rebuild();
     return super.listen(callback);
   }
 
   @override
-  Subscription changed(void Function() callback) {
+  Subscription changed(Function callback) {
     _rebuild();
     return super.changed(callback);
   }
@@ -72,7 +72,7 @@ class Computed<T> extends ObservableBase<T> {
     //set false here to avoid access this computed again in listen
     _hasChanged = false;
 
-    //new subscribes, it there are no depends then it nerver run again
+    //new subscribes, it there are no depends then it never run again
     for (var dep in _depends) {
       _subscriptions.add(dep.changed(() {
         _hasChanged = true;
@@ -109,7 +109,7 @@ class Computed<T> extends ObservableBase<T> {
   ///Number times of calculator was called
   int get rebuildCount => _rebuildCount;
 
-  ///Tempory pause rebuild value if there are an observable changed
+  ///Temporary pause rebuild value if there are an observable changed
   void pause() {
     if (_pause) return;
     _pause = true;
