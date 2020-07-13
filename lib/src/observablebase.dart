@@ -117,6 +117,11 @@ abstract class ObservableBase<T> {
     _isValid?.dispose();
     _callbacks.clear();
   }
+
+  @override
+  String toString() {
+    return '${runtimeType.toString()}(${peek.toString()})';
+  }
 }
 
 ///Handle valid state for an observable
