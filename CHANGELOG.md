@@ -1,7 +1,12 @@
 # CHANGE LOG
 
+## 1.0.4
+
+Add function toString
+
 ## 1.0.3
-Support listener function with  parameters  
+
+Support listener function with parameters  
 Reuse CancelableThen in ObservableValidator  
 Spell check
 
