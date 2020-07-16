@@ -99,7 +99,9 @@ abstract class ObservableBase<T> {
   }
 
   ///Check there are listeners on this observable
-  bool get hasListener => _callbacks.isNotEmpty;
+  bool get hasListener =>
+      (_isValid == null && _callbacks.isNotEmpty) ||
+      (_isValid != null && (_isValid.hasListener || _callbacks.length > 1));
 
   ///Check value has updated
   bool get modified => peek != oldValue;
@@ -144,7 +146,6 @@ class ObservableValidator extends ObservableBase<bool> {
     //insert at top list, so it can run update valid status
     //before other listeners called
     observable._callbacks.insert(0, _observableChanged);
-    _oldObsValue = observable.peek;
   }
 
   void _observableChanged() {

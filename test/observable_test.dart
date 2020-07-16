@@ -281,6 +281,19 @@ void main() {
       a.value = 3;
       expect(c.value, 20);
     });
+
+    test('Do not recompute Computed has isValid but there are no listener',
+        () async {
+      var a = Observable(0);
+      var b = Computed(() => a.value);
+      b.isValid.validator = ValidatorRequired();
+      a.value = 1;
+      await Future.delayed(Duration(seconds: 1));
+      expect(b.rebuildCount, 0);
+      expect(b.isValid.value, true);
+      expect(b.value, 1);
+      expect(b.rebuildCount, 1);
+    });
   });
 
   test('runtime computed, don\'t depend on so much', () {
