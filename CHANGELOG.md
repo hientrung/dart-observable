@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 1.0.5
+
+Do not recompute Computed has isValid but there are no listener
+
 ## 1.0.4
 
 Add function toString
