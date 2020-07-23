@@ -66,6 +66,9 @@ abstract class ObservableBase<T> {
 
   ///Notify to observers are listen on this observable
   void notify() {
+    if (!hasListener) {
+      return;
+    }
     for (var cb in _callbacks) {
       _executeCallback(cb);
     }

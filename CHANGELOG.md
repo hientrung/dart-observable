@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+## next
+
+Export CancelableThen
+Check hasListener before execute callbacks
+
 ## 1.0.5
 
 Do not recompute Computed has isValid but there are no listener
