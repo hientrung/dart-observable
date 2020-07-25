@@ -68,6 +68,7 @@ class Computed<T> extends ObservableBase<T> {
     if (val != _value) {
       _oldValue = _value;
       _value = val;
+      notify();
     }
     //set false here to avoid access this computed again in listen
     _hasChanged = false;
@@ -84,7 +85,6 @@ class Computed<T> extends ObservableBase<T> {
               future: Future.delayed(Duration(milliseconds: rateLimit)),
               then: (_) {
                 _rebuild();
-                notify();
               });
         }
       }));

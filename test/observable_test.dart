@@ -333,4 +333,19 @@ void main() {
     await Future.delayed(Duration(seconds: 1));
     print(b.rebuildCount);
   });
+
+  test('listen on computed', () async {
+    final a = Observable(0);
+    final b = Computed<bool>(() => a.value < 10 ? true : false);
+    var c = 0;
+    b.listen(() => c++);
+    a.value = 1;
+    await Future.delayed(Duration(seconds: 1));
+    a.value = 2;
+    await Future.delayed(Duration(seconds: 1));
+    expect(c, 1);
+    a.value = 10;
+    await Future.delayed(Duration(seconds: 1));
+    expect(c, 2);
+  });
 }

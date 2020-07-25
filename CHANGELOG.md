@@ -2,6 +2,7 @@
 
 ## next
 
+Fix bug notify in Computed
 Export CancelableThen
 Check hasListener before execute callbacks
 
