@@ -115,6 +115,9 @@ abstract class ObservableBase<T> {
     return _isValid;
   }
 
+  ///Check has using validate value
+  bool get hasValidator => _isValid != null;
+
   ///Close stream (if used) and all listeners on this observable
   void dispose() {
     _streamer?.close();
@@ -246,4 +249,10 @@ class ObservableValidator extends ObservableBase<bool> {
     _callbacks.remove(_observableChanged);
     super.dispose();
   }
+}
+
+///Class used to mixin with observable can set value
+abstract class ObservableWritable<T> {
+  ///Set current value
+  void set value(T value);
 }

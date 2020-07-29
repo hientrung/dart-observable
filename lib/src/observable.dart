@@ -1,7 +1,7 @@
 import 'observablebase.dart';
 
 ///A generic observable for a value
-class Observable<T> extends ObservableBase<T> {
+class Observable<T> extends ObservableBase<T> with ObservableWritable<T> {
   ///Create new observable with init value (optional)
   Observable([T val]) : super() {
     _value = val;
@@ -17,7 +17,8 @@ class Observable<T> extends ObservableBase<T> {
   @override
   T get peek => _value;
 
-  set value(T v) {
+  @override
+  void set value(T v) {
     if (_value == v) return;
     _oldValue = _value;
     _value = v;

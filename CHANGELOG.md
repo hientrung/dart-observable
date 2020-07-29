@@ -2,6 +2,8 @@
 
 ## next
 
+Add base class ObservableWritable used mixin for Observable, Commission
+Add property hasValidator used to check has validate value
 Fix bug notify in Computed
 Export CancelableThen
 Check hasListener before execute callbacks
