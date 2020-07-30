@@ -1,6 +1,6 @@
 # CHANGE LOG
 
-## next
+## 1.0.6
 
 Add base class ObservableWritable used mixin for Observable, Commission
 Add property hasValidator used to check has validate value
