@@ -18,7 +18,7 @@ class Observable<T> extends ObservableBase<T> with ObservableWritable<T> {
   T get peek => _value;
 
   @override
-  void set value(T v) {
+  set value(T v) {
     if (_value == v) return;
     _oldValue = _value;
     _value = v;

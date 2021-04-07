@@ -1,5 +1,6 @@
 ///Cancelable a callback function for Future.
-///Of course, we can not cancel a Future, this is just ignore call callback [then]
+///Of course, we can not cancel a Future,
+///this is just ignore call callback [then]
 ///
 ///Future return null if it's canceled
 class CancelableThen<T> {

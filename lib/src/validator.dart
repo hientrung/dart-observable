@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:obsobject/src/cancelablethen.dart';
+import 'cancelablethen.dart';
 
 ///Interface to register a subclass [Validator]
 ///to determine how to create it from a [Map] data
@@ -114,8 +114,9 @@ abstract class Validator {
             break;
           case 'condition':
           case 'if':
-            if (value is! bool Function())
-              throw "The value of '${key}' should be Function";
+            if (value is! bool Function()) {
+              throw "The value of '$key' should be Function";
+            }
             vd.condition = value;
             break;
           default:
@@ -186,7 +187,7 @@ class ValidatorAll extends Validator {
     Validator.registered['all'] = ValidatorRegister(
         creator: () => ValidatorAll(),
         mapping: (vd, k, v) {
-          ValidatorAll el = vd as ValidatorAll;
+          var el = vd as ValidatorAll;
           switch (k) {
             case 'validators':
               el.validators = Validator.convertMulti(v);
@@ -226,7 +227,7 @@ class ValidatorLeast extends Validator {
     Validator.registered['least'] = ValidatorRegister(
         creator: () => ValidatorLeast(),
         mapping: (vd, k, v) {
-          ValidatorLeast el = vd as ValidatorLeast;
+          var el = vd as ValidatorLeast;
           switch (k) {
             case 'validators':
               el.validators = Validator.convertMulti(v);
@@ -264,7 +265,7 @@ class ValidatorNot extends Validator {
     Validator.registered['not'] = ValidatorRegister(
         creator: () => ValidatorNot(),
         mapping: (vd, k, v) {
-          ValidatorNot el = vd as ValidatorNot;
+          var el = vd as ValidatorNot;
           switch (k) {
             case 'source':
               if (v is Map<String, dynamic>) {
@@ -345,7 +346,7 @@ class ValidatorRange extends Validator {
     Validator.registered['range'] = ValidatorRegister(
         creator: () => ValidatorRange(),
         mapping: (vd, k, v) {
-          ValidatorRange el = vd as ValidatorRange;
+          var el = vd as ValidatorRange;
           switch (k) {
             case 'min':
               el.min = v;
@@ -397,7 +398,7 @@ class ValidatorPattern extends Validator {
     Validator.registered['pattern'] = ValidatorRegister(
         creator: () => ValidatorPattern(),
         mapping: (vd, k, v) {
-          ValidatorPattern el = vd as ValidatorPattern;
+          var el = vd as ValidatorPattern;
           switch (k) {
             case 'pattern':
               el.pattern = v;
@@ -465,7 +466,7 @@ class ValidatorContains extends Validator {
     Validator.registered['contains'] = ValidatorRegister(
         creator: () => ValidatorContains(),
         mapping: (vd, k, v) {
-          ValidatorContains el = vd as ValidatorContains;
+          var el = vd as ValidatorContains;
           switch (k) {
             case 'source':
               el.source = v;
@@ -507,7 +508,7 @@ class ValidatorUnique extends Validator {
     Validator.registered['unique'] = ValidatorRegister(
         creator: () => ValidatorUnique(),
         mapping: (vd, k, v) {
-          ValidatorUnique el = vd as ValidatorUnique;
+          var el = vd as ValidatorUnique;
           switch (k) {
             case 'source':
               el.source = v;
@@ -567,7 +568,7 @@ class ValidatorCustom extends Validator {
     Validator.registered['custom'] = ValidatorRegister(
         creator: () => ValidatorCustom(),
         mapping: (vd, k, v) {
-          ValidatorCustom el = vd as ValidatorCustom;
+          var el = vd as ValidatorCustom;
           switch (k) {
             case 'valid':
               el.valid = v;
@@ -673,7 +674,7 @@ class ValidatorAsync extends Validator {
     Validator.registered['async'] = ValidatorRegister(
         creator: () => ValidatorAsync(),
         mapping: (vd, k, v) {
-          ValidatorAsync el = vd as ValidatorAsync;
+          var el = vd as ValidatorAsync;
           switch (k) {
             case 'valid':
               el.valid = v;

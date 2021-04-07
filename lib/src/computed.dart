@@ -35,8 +35,9 @@ class Computed<T> extends ObservableBase<T> {
   @override
   T get peek {
     _rebuild();
-    if (_rebuildCount == 0)
+    if (_rebuildCount == 0) {
       throw 'The compute function didn\'t run, maybe pausing';
+    }
     return _value;
   }
 

@@ -9,8 +9,8 @@ class User {
     ..isValid.validator = Validator.convert({
       'least': {'required': 'Email is required', 'email': true}
     });
-  late var fullName =
+  late Computed<String> fullName =
       Computed<String>(() => '${firstName.value}  ${lastName.value}');
-  late var valid = Computed<bool>(() =>
+  late Computed<bool> valid = Computed<bool>(() =>
       firstName.isValid.value && lastName.isValid.value && email.isValid.value);
 }

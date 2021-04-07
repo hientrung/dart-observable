@@ -15,7 +15,7 @@ class Commission<T> extends Computed<T> with ObservableWritable<T> {
   Commission({required this.reader, required this.writer}) : super(reader);
 
   @override
-  void set value(T val) {
+  set value(T val) {
     if (val != super.peek) writer(val);
   }
 }

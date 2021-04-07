@@ -232,7 +232,8 @@ class ObservableValidator extends ObservableBase<bool> {
     return super.listen(callback);
   }
 
-  ///force all listener in observable there are change in isValid by async validate,
+  ///force all listener in observable
+  ///there are change in isValid by async validate,
   ///due to it can listen in observable instead isValid
   void _notifyObservable() {
     for (var p in observable._callbacks) {
@@ -250,7 +251,7 @@ class ObservableValidator extends ObservableBase<bool> {
 }
 
 ///Class used to mixin with observable can set value
-abstract class ObservableWritable<T> {
+mixin ObservableWritable<T> on ObservableBase<T> {
   ///Set current value
-  void set value(T value);
+  set value(T value);
 }

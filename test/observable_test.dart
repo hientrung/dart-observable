@@ -87,7 +87,8 @@ void main() {
 
     test('Listen with 1 parameter', () {
       var a = Observable(1);
-      a.listen((int v) {
+      a.listen((v) {
+        expect(v.runtimeType, int);
         expect(v, a.value);
       });
       a.value = 2;
@@ -96,7 +97,8 @@ void main() {
 
     test('Listen with 2 parameter', () {
       var a = Observable(1);
-      a.listen((int v, int o) {
+      a.listen((v, o) {
+        expect(o.runtimeType, int);
         expect(v, a.value);
         expect(o, a.oldValue);
       });
@@ -300,23 +302,33 @@ void main() {
     var max = 1000;
     var c = 10;
     var w = Stopwatch();
-    for (var i = 0; i < c; i++) a.add(Observable(i));
-    for (var i = 0; i < max; i++)
+    for (var i = 0; i < c; i++) {
+      a.add(Observable(i));
+    }
+    for (var i = 0; i < max; i++) {
       b.add(Computed(() {
         var t = 0;
-        for (var j = 0; j < c; j++) t += a[j].value;
+        for (var j = 0; j < c; j++) {
+          t += a[j].value;
+        }
         return t;
       }));
-    for (var i = 0; i < max; i++) b[i].listen(() {});
+    }
+    for (var i = 0; i < max; i++) {
+      b[i].listen(() {});
+    }
     b[max - 1].changed(() {
       w.stop();
-      print(
-          'has $max computed, each computed depend on $c observables then all update value, runtime all computed ${w.elapsedMilliseconds}ms');
+      print('has $max computed, each computed depend on '
+          '$c observables then all update value, runtime all computed '
+          '${w.elapsedMilliseconds}ms');
       print('rebuild ${b[0].rebuildCount}');
       cm.complete();
     });
     w.start();
-    for (var i = 0; i < c; i++) a[i].value++;
+    for (var i = 0; i < c; i++) {
+      a[i].value++;
+    }
     expect(cm.future, completes);
   });
 
