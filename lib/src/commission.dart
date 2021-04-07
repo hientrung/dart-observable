@@ -12,13 +12,10 @@ class Commission<T> extends Computed<T> with ObservableWritable<T> {
   final void Function(T val) writer;
 
   ///Create a computed can writeable
-  Commission({this.reader, this.writer})
-      : assert(reader != null),
-        assert(writer != null),
-        super(reader);
+  Commission({required this.reader, required this.writer}) : super(reader);
 
   @override
   void set value(T val) {
-    if (val != super.value) writer(val);
+    if (val != super.peek) writer(val);
   }
 }

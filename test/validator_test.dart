@@ -137,7 +137,7 @@ void main() {
           }
         }
       }
-    });
+    })!;
     expect(a.validate(''), null);
     t = true;
     expect(a.validate(''), isNotNull);

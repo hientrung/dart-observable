@@ -18,7 +18,7 @@ void main() {
     });
 
     test('changed observer', () async {
-      var a = Observable();
+      var a = Observable(0);
       var b = Computed(() => a.value);
       var c = 0;
       b.changed(() {
@@ -172,9 +172,6 @@ void main() {
       b.pause();
       a.value++;
       a.value++;
-      b.value;
-      a.value++;
-      expect(b.value, null);
       b.resume();
       b.value;
       expect(b.rebuildCount, 1);
@@ -204,7 +201,7 @@ void main() {
 
     test('writeable', () {
       var a = Observable(1);
-      var b = Commission(
+      var b = Commission<int>(
           reader: () => a.value * 2, writer: (v) => a.value = v ~/ 2);
       expect(b.value, 2);
       b.value = 8;

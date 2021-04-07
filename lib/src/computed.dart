@@ -5,8 +5,8 @@ import 'observablebase.dart';
 
 ///Auto compute values from some observable by async update function
 class Computed<T> extends ObservableBase<T> {
-  T _oldValue;
-  T _value;
+  late T _oldValue;
+  late T _value;
   var _rebuildCount = 0;
   var _pause = false;
 
@@ -16,10 +16,10 @@ class Computed<T> extends ObservableBase<T> {
 
   ///Function used to calculate value
   final T Function() calculator;
-  CancelableThen _asyncRebuild;
+  CancelableThen? _asyncRebuild;
 
   ///Function called if there are error in procession [calculator]
-  final void Function(Object error, StackTrace stack) onError;
+  final void Function(Object error, StackTrace stack)? onError;
 
   ///Only notify change and rebuild after a number period (millisecond)
   int rateLimit;
@@ -27,7 +27,6 @@ class Computed<T> extends ObservableBase<T> {
   ///Create a observable that calculate value base on other observables
   Computed(this.calculator, {this.rateLimit = 0, this.onError})
       : assert(rateLimit >= 0),
-        assert(calculator != null),
         super();
 
   @override
@@ -36,6 +35,8 @@ class Computed<T> extends ObservableBase<T> {
   @override
   T get peek {
     _rebuild();
+    if (_rebuildCount == 0)
+      throw 'The compute function didn\'t run, maybe pausing';
     return _value;
   }
 
@@ -62,16 +63,25 @@ class Computed<T> extends ObservableBase<T> {
     //calculate with zone to get depends
     //Future/Stream async are running in zone context too
     //so it can get dependencies but it don't get value (it return already)
+    var ok = true;
     var val = runZonedGuarded(calculator, (err, stack) {
-      if (onError != null) onError(err, stack);
+      ok = false;
+      if (onError != null) onError!(err, stack);
     }, zoneValues: {'computedDepends': _depends, 'computed': this});
-    if (val != _value) {
-      _oldValue = _value;
-      _value = val;
-      notify();
-    }
+    if (!ok) return;
+
     //set false here to avoid access this computed again in listen
     _hasChanged = false;
+
+    if (_rebuildCount == 1) {
+      _oldValue = val as T;
+      _value = _oldValue;
+      notify();
+    } else if (val != _value) {
+      _oldValue = _value;
+      _value = val as T;
+      notify();
+    }
 
     //new subscribes, it there are no depends then it never run again
     for (var dep in _depends) {
@@ -93,7 +103,7 @@ class Computed<T> extends ObservableBase<T> {
 
   void _reset() {
     if (_asyncRebuild != null) {
-      _asyncRebuild.cancel();
+      _asyncRebuild!.cancel();
       _asyncRebuild = null;
     }
     for (var sub in _subscriptions) {

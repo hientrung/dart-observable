@@ -9,12 +9,12 @@ class ValidatorRegister {
   Validator Function() creator;
 
   ///Mapping a key, value to property of object
-  void Function(Validator validator, String key, dynamic value) mapping;
+  void Function(Validator validator, String key, dynamic value)? mapping;
 
   ///Register new subclass [Validator]
   ///
   ///[creator] required, [mapping] can be null
-  ValidatorRegister({this.creator, this.mapping}) : assert(creator != null);
+  ValidatorRegister({required this.creator, this.mapping});
 }
 
 ///Base class use to implement a validation
@@ -26,28 +26,27 @@ abstract class Validator {
   ///This used in subclass only
   ///
   ///For use, please take [validate] instead
-  String doValidate(dynamic value);
+  String? doValidate(dynamic value);
 
   ///Message used return when [validate] need return invalid state
-  String message;
+  String? message;
 
   ///Used to do some check context before run [validate].
   ///
   ///If it return false then [validate] will ignored
-  bool Function() condition;
+  bool Function()? condition;
 
   ///Do check [value], return text (not empty) if [value] is incorrect,
   ///else return null
-  String validate(dynamic value) {
-    if (condition != null && !condition()) return null;
+  String? validate(dynamic value) {
+    if (condition != null && !condition!()) return null;
     var s = doValidate(value) ?? '';
     return s.isEmpty ? null : s;
   }
 
   ///Helper function to return the first string is not null, not empty.
   ///Or return null if not found
-  static String getMessage(List<String> msg) {
-    assert(msg != null);
+  static String? getMessage(List<String?> msg) {
     for (var s in msg) {
       if (s != null && s.isNotEmpty) {
         return s;
@@ -56,7 +55,7 @@ abstract class Validator {
     return null;
   }
 
-  static Map<String, ValidatorRegister> _registered;
+  static Map<String, ValidatorRegister>? _registered;
 
   ///cached all registered validators
   static Map<String, ValidatorRegister> get registered {
@@ -75,7 +74,7 @@ abstract class Validator {
       ValidatorCustom.register();
       ValidatorAsync.register();
     }
-    return _registered;
+    return _registered!;
   }
 
   ///Convert a [Map] to a [Validator], there are only one element in Map.
@@ -88,8 +87,8 @@ abstract class Validator {
   ///- true: use Validator with default values
   ///- String: use Validator with custom message
   ///- Map: contains key, value corresponding with properties of Validator
-  static Validator convert(Map<String, dynamic> map) {
-    if (map == null || map.isEmpty) return null;
+  static Validator? convert(Map<String, dynamic> map) {
+    if (map.isEmpty) return null;
     if (map.keys.length > 1) {
       throw 'Map should has one element. '
           "Use 'all' or 'least' to combine multi validators";
@@ -106,22 +105,21 @@ abstract class Validator {
       //nothing, because it's true now
     } else if (v is String) {
       vd.message = v;
-    } else if (v is Map) {
-      Map<String, dynamic> prop = v;
-      prop.forEach((key, value) {
+    } else if (v is Map<String, dynamic>) {
+      v.forEach((key, value) {
         switch (key) {
           case 'message':
           case 'msg':
-            assert(value is String);
-            vd.message = value;
+            vd.message = value.toString();
             break;
           case 'condition':
           case 'if':
-            assert(value is Function);
+            if (value is! bool Function())
+              throw "The value of '${key}' should be Function";
             vd.condition = value;
             break;
           default:
-            if (type.mapping != null) type.mapping(vd, key, value);
+            if (type.mapping != null) type.mapping!(vd, key, value);
         }
       });
     } else {
@@ -137,14 +135,14 @@ abstract class Validator {
       for (var v in val) {
         if (v is Validator) {
           result.add(v);
-        } else if (v is Map) {
+        } else if (v is Map<String, dynamic>) {
           var vd = convert(v);
-          if (vd != null) result.add(convert(v));
+          if (vd != null) result.add(vd);
         } else {
           throw 'List should contains Validator or Map';
         }
       }
-    } else if (val is Map) {
+    } else if (val is Map<String, dynamic>) {
       for (var k in val.keys) {
         var vd = convert({k: val[k]});
         if (vd != null) result.add(vd);
@@ -160,19 +158,19 @@ abstract class Validator {
 class ValidatorAll extends Validator {
   ///Default invalid message
   ///it will be used if [message] doesn't has value
-  static String defaultMessage;
+  static String? defaultMessage;
 
   ///Validators will be check
-  List<Validator> validators;
+  List<Validator>? validators;
 
   ///Create a [Validator] to validate all other validators
   ValidatorAll([this.validators]);
 
   @override
-  String doValidate(dynamic value) {
-    if (validators == null || validators.isEmpty) return null;
+  String? doValidate(dynamic value) {
+    if (validators == null || validators!.isEmpty) return null;
     var msg = <String>[];
-    for (var vd in validators) {
+    for (var vd in validators!) {
       var v = vd.validate(value);
       if (v != null) msg.add(v);
     }
@@ -188,7 +186,7 @@ class ValidatorAll extends Validator {
     Validator.registered['all'] = ValidatorRegister(
         creator: () => ValidatorAll(),
         mapping: (vd, k, v) {
-          ValidatorAll el = vd;
+          ValidatorAll el = vd as ValidatorAll;
           switch (k) {
             case 'validators':
               el.validators = Validator.convertMulti(v);
@@ -202,19 +200,19 @@ class ValidatorAll extends Validator {
 class ValidatorLeast extends Validator {
   ///Default invalid message
   ///it will be used if [message] doesn't has value
-  static String defaultMessage;
+  static String? defaultMessage;
 
   ///Validators will be check
-  List<Validator> validators;
+  List<Validator>? validators;
 
   ///Create a [Validator] to validate other validators
   ///and stop at the first one invalid
   ValidatorLeast([this.validators]);
 
   @override
-  String doValidate(dynamic value) {
-    if (validators == null || validators.isEmpty) return null;
-    for (var vd in validators) {
+  String? doValidate(dynamic value) {
+    if (validators == null || validators!.isEmpty) return null;
+    for (var vd in validators!) {
       var v = vd.validate(value) ?? '';
       if (v.isNotEmpty) {
         return Validator.getMessage([message, defaultMessage, v]);
@@ -228,7 +226,7 @@ class ValidatorLeast extends Validator {
     Validator.registered['least'] = ValidatorRegister(
         creator: () => ValidatorLeast(),
         mapping: (vd, k, v) {
-          ValidatorLeast el = vd;
+          ValidatorLeast el = vd as ValidatorLeast;
           switch (k) {
             case 'validators':
               el.validators = Validator.convertMulti(v);
@@ -245,19 +243,19 @@ class ValidatorNot extends Validator {
   static String defaultMessage = 'Field value is invalid';
 
   ///Current [Validator] used to negative
-  Validator source;
+  Validator? source;
 
   ///Create a [Validator] by negative a other [Validator]
   ValidatorNot([this.source]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (source == null) return null;
-    var s = source.validate(value);
+    var s = source!.validate(value);
     if (s != null && s.isNotEmpty) {
       return null;
     } else {
-      return Validator.getMessage([s, message, defaultMessage]);
+      return Validator.getMessage([message, defaultMessage]);
     }
   }
 
@@ -266,10 +264,10 @@ class ValidatorNot extends Validator {
     Validator.registered['not'] = ValidatorRegister(
         creator: () => ValidatorNot(),
         mapping: (vd, k, v) {
-          ValidatorNot el = vd;
+          ValidatorNot el = vd as ValidatorNot;
           switch (k) {
             case 'source':
-              if (v is Map) {
+              if (v is Map<String, dynamic>) {
                 el.source = Validator.convert(v);
               } else if (v is Validator) {
                 el.source = v;
@@ -289,7 +287,7 @@ class ValidatorRequired extends Validator {
   static String defaultMessage = 'Field value is required.';
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null ||
         (value is String && value == '') ||
         ((value is int || value is double) && value == 0)) {
@@ -302,7 +300,7 @@ class ValidatorRequired extends Validator {
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['required'] =
-        ValidatorRegister(creator: () => ValidatorRequired(), mapping: null);
+        ValidatorRegister(creator: () => ValidatorRequired());
   }
 }
 
@@ -325,7 +323,7 @@ class ValidatorRange extends Validator {
   ValidatorRange({this.min, this.max});
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null || (value is String && value.isEmpty)) return null;
     dynamic v;
     if (value is String || value is List) {
@@ -336,7 +334,7 @@ class ValidatorRange extends Validator {
     if ((min != null && v < min) || (max != null && v > max)) {
       return Validator.getMessage([message, defaultMessage])
           ?.replaceAll(r'{0}', min.toString())
-          ?.replaceAll(r'{1}', max.toString());
+          .replaceAll(r'{1}', max.toString());
     } else {
       return null;
     }
@@ -347,7 +345,7 @@ class ValidatorRange extends Validator {
     Validator.registered['range'] = ValidatorRegister(
         creator: () => ValidatorRange(),
         mapping: (vd, k, v) {
-          ValidatorRange el = vd;
+          ValidatorRange el = vd as ValidatorRange;
           switch (k) {
             case 'min':
               el.min = v;
@@ -373,7 +371,7 @@ class ValidatorPattern extends Validator {
   ValidatorPattern([this.pattern]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (pattern == null ||
         value == null ||
         (value is String && value.isEmpty) ||
@@ -399,7 +397,7 @@ class ValidatorPattern extends Validator {
     Validator.registered['pattern'] = ValidatorRegister(
         creator: () => ValidatorPattern(),
         mapping: (vd, k, v) {
-          ValidatorPattern el = vd;
+          ValidatorPattern el = vd as ValidatorPattern;
           switch (k) {
             case 'pattern':
               el.pattern = v;
@@ -416,7 +414,7 @@ class ValidatorEmail extends Validator {
   static String defaultMessage = 'Invalid email';
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null || value.isEmpty) return null;
     var reg = RegExp(r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$');
     if (!reg.hasMatch(value)) {
@@ -429,7 +427,7 @@ class ValidatorEmail extends Validator {
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['email'] =
-        ValidatorRegister(creator: () => ValidatorEmail(), mapping: null);
+        ValidatorRegister(creator: () => ValidatorEmail());
   }
 }
 
@@ -447,7 +445,7 @@ class ValidatorContains extends Validator {
   ValidatorContains([this.source]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null ||
         source == null ||
         (source is String && source.isEmpty)) {
@@ -467,7 +465,7 @@ class ValidatorContains extends Validator {
     Validator.registered['contains'] = ValidatorRegister(
         creator: () => ValidatorContains(),
         mapping: (vd, k, v) {
-          ValidatorContains el = vd;
+          ValidatorContains el = vd as ValidatorContains;
           switch (k) {
             case 'source':
               el.source = v;
@@ -491,7 +489,7 @@ class ValidatorUnique extends Validator {
   ValidatorUnique([this.source]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null ||
         source == null ||
         (source is String && source.isEmpty)) {
@@ -509,7 +507,7 @@ class ValidatorUnique extends Validator {
     Validator.registered['unique'] = ValidatorRegister(
         creator: () => ValidatorUnique(),
         mapping: (vd, k, v) {
-          ValidatorUnique el = vd;
+          ValidatorUnique el = vd as ValidatorUnique;
           switch (k) {
             case 'source':
               el.source = v;
@@ -526,7 +524,7 @@ class ValidatorTrue extends Validator {
   static String defaultMessage = 'Field value is invalid';
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value != true) {
       return Validator.getMessage([message, defaultMessage]);
     } else {
@@ -537,7 +535,7 @@ class ValidatorTrue extends Validator {
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['true'] =
-        ValidatorRegister(creator: () => ValidatorTrue(), mapping: null);
+        ValidatorRegister(creator: () => ValidatorTrue());
   }
 }
 
@@ -549,15 +547,15 @@ class ValidatorCustom extends Validator {
 
   ///Function used to check value.
   ///Return 'true' if value is valid, else 'false'
-  bool Function(dynamic value) valid;
+  bool Function(dynamic value)? valid;
 
   ///Create [Validator] can check value by a custom function [valid]
   ValidatorCustom([this.valid]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null || valid == null) return null;
-    if (!valid(value)) {
+    if (!valid!(value)) {
       return Validator.getMessage([message, defaultMessage]);
     } else {
       return null;
@@ -569,7 +567,7 @@ class ValidatorCustom extends Validator {
     Validator.registered['custom'] = ValidatorRegister(
         creator: () => ValidatorCustom(),
         mapping: (vd, k, v) {
-          ValidatorCustom el = vd;
+          ValidatorCustom el = vd as ValidatorCustom;
           switch (k) {
             case 'valid':
               el.valid = v;
@@ -596,29 +594,29 @@ class ValidatorAsync extends Validator {
   static String defaultMessageAsync = 'Async is running';
 
   ///Custom message while async running
-  String messageAsync;
+  String? messageAsync;
 
   ///Async function used to check [value]
-  Future<bool> Function(dynamic value) valid;
+  Future<bool> Function(dynamic value)? valid;
   bool _running = false;
   dynamic _oldValue;
-  bool _result;
+  bool _result = false;
 
   ///A callback function when starting [validate]
-  void Function() onStart;
+  void Function()? onStart;
 
   ///A callback function after [validate] value
-  void Function(bool result) onDone;
+  void Function(bool result)? onDone;
 
   ///A debounce time (millisecond) to run validate
-  int rateLimit;
-  CancelableThen _subValid;
+  int rateLimit = 0;
+  CancelableThen? _subValid;
 
   ///Create [Validator] can check value by an async function
   ValidatorAsync([this.valid]);
 
   @override
-  String doValidate(dynamic value) {
+  String? doValidate(dynamic value) {
     if (value == null || valid == null) {
       if (_running) {
         _running = false;
@@ -626,7 +624,7 @@ class ValidatorAsync extends Validator {
         _oldValue = null;
         _subValid?.cancel();
         _subValid = null;
-        if (onDone != null) onDone(_result);
+        if (onDone != null) onDone!(_result);
       }
       return null;
     }
@@ -635,16 +633,16 @@ class ValidatorAsync extends Validator {
       //check new value
       _running = true;
       _oldValue = value;
-      if (onStart != null) onStart();
+      if (onStart != null) onStart!();
       _subValid?.cancel();
       _subValid = CancelableThen(
-          future: Future.delayed(Duration(milliseconds: rateLimit ?? 0)),
+          future: Future.delayed(Duration(milliseconds: rateLimit)),
           then: (_) {
-            valid(value).then((v) {
+            valid!(value).then((v) {
               _running = false;
               _result = v;
               //notify manual
-              if (onDone != null) onDone(_result);
+              if (onDone != null) onDone!(_result);
               //callback by Zone
               var callback = Zone.current['validatorCallback'];
               if (callback != null) {
@@ -675,7 +673,7 @@ class ValidatorAsync extends Validator {
     Validator.registered['async'] = ValidatorRegister(
         creator: () => ValidatorAsync(),
         mapping: (vd, k, v) {
-          ValidatorAsync el = vd;
+          ValidatorAsync el = vd as ValidatorAsync;
           switch (k) {
             case 'valid':
               el.valid = v;

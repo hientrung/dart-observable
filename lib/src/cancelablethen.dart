@@ -12,8 +12,7 @@ class CancelableThen<T> {
   bool _isComplete = false;
 
   ///Create a async function can cancel
-  CancelableThen({this.future, this.then})
-      : assert(future != null && then != null) {
+  CancelableThen({required this.future, required this.then}) {
     future.then((value) {
       if (!_isCancel) {
         var v = then(value);

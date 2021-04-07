@@ -3,13 +3,13 @@ import 'observablebase.dart';
 ///A generic observable for a value
 class Observable<T> extends ObservableBase<T> with ObservableWritable<T> {
   ///Create new observable with init value (optional)
-  Observable([T val]) : super() {
+  Observable(T val) : super() {
     _value = val;
     _oldValue = val;
   }
 
-  T _oldValue;
-  T _value;
+  late T _oldValue;
+  late T _value;
 
   @override
   T get oldValue => _oldValue;
