@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 1.1.0
+
+Update to support null safety
+
 ## 1.0.6
 
 Add base class ObservableWritable used mixin for Observable, Commission

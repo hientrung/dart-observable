@@ -1,15 +1,20 @@
 # Obsobject
+
 An observable, computed objects written in Dart with built-in validation
 
-# Install 
+# Install
+
 ```yaml
-dependencies:  
-    obsobject: ^1.0.0
+dependencies:
+  obsobject: ^1.1.0
 ```
+
 # Observable
-An object will notify to all listeners/observers after its value changed.  
+
+An object will notify to all listeners/observers after its value changed.
 
 Example:
+
 ```dart
 var a = Observable('test');
 a.listen(() {
@@ -17,16 +22,18 @@ a.listen(() {
 });
 a.value = 'First test';
 ```
+
 Output result:  
 test  
 First test
 
-
 # Computed
-It's an observable too, but its value will be calculated from other observable object.  
-It's smart to know which observable object that it's depend on, and auto rebuild value when value of dependencies has changed.  
 
-Example:  
+It's an observable too, but its value will be calculated from other observable object.  
+It's smart to know which observable object that it's depend on, and auto rebuild value when value of dependencies has changed.
+
+Example:
+
 ```dart
 var a = Observable(false);
 var b = Observable(1);
@@ -44,18 +51,21 @@ Computed object is only recalculate if there are listeners on it or when access 
 And the calculation is a async process, so observable can change value many times, but Computed just run one
 
 Example:
+
 ```dart
 var a = Observable(0);
 var b = Computed(() => a.value);
 b.changed(()=>print(b.value));
 for(var i=0; i<1000; i++) a.value=i;
 print(b.rebuildCount); //result 1
-```  
+```
 
 Computed is just give readonly value, thus there are a object Commission used to read+write value
 
 # Validator
-Built-in validate:  
+
+Built-in validate:
+
 - required: value can not null, empty string, zero
 - email: value must be valid email address
 - range: check number value, string length, array length
@@ -70,20 +80,22 @@ Built-in validate:
 - not: negative a validator
 
 Observable has a property **isValid**, it's an observable value of validation status, and it also has features:
+
 - condition: used to check something before execute validate
 - message: custom message, default message, support for localize
 - And easy way to custom or extends new validation
 
 Example:
+
 ```dart
 //use with Validator....
 var email = Observable('')
-            ..isValid.validator = 
+            ..isValid.validator =
                 ValidatorLeast([ValidatorRequired(), ValidatorEmail()]);
 
 //use with Map data config
 var email = Observable('')
-            ..isValid.validator = 
+            ..isValid.validator =
                 Validator.convert({
 'least': {
     'validators': {'required': 'Email is required', 'email': true}
