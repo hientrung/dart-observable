@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'cancelablethen.dart';
 import 'observablebase.dart';
 
 ///Auto compute values from some observable by async update function
@@ -16,7 +14,7 @@ class Computed<T> extends ObservableBase<T> {
 
   ///Function used to calculate value
   final T Function() calculator;
-  CancelableThen? _asyncRebuild;
+  Future<void>? _asyncRebuild;
 
   ///Function called if there are error in procession [calculator]
   final void Function(Object error, StackTrace stack)? onError;
@@ -36,7 +34,7 @@ class Computed<T> extends ObservableBase<T> {
   T get peek {
     _rebuild();
     if (_rebuildCount == 0) {
-      throw 'The compute function didn\'t run, maybe pausing';
+      throw 'The computation function didn\'t run, maybe pausing';
     }
     return _value;
   }
@@ -55,7 +53,7 @@ class Computed<T> extends ObservableBase<T> {
 
   ///calculate to get value and depend observables
   void _rebuild() {
-    if (!_hasChanged) return;
+    if (!_hasChanged || _pause) return;
     _rebuildCount++;
     //print('computed run');
     //clear old depends
@@ -89,24 +87,17 @@ class Computed<T> extends ObservableBase<T> {
       _subscriptions.add(dep.changed(() {
         _hasChanged = true;
         //force rebuild for observer
-        if (hasListener) {
+        if (hasListener && _asyncRebuild == null && !_pause) {
           //use async rebuild with rate
-          _asyncRebuild?.cancel();
-          _asyncRebuild = CancelableThen(
-              future: Future.delayed(Duration(milliseconds: rateLimit)),
-              then: (_) {
-                _rebuild();
-              });
+          _asyncRebuild =
+              Future.delayed(Duration(milliseconds: rateLimit), _rebuild);
         }
       }));
     }
   }
 
   void _reset() {
-    if (_asyncRebuild != null) {
-      _asyncRebuild!.cancel();
-      _asyncRebuild = null;
-    }
+    _asyncRebuild = null;
     for (var sub in _subscriptions) {
       sub.dispose();
     }
@@ -124,14 +115,13 @@ class Computed<T> extends ObservableBase<T> {
   void pause() {
     if (_pause) return;
     _pause = true;
-    _hasChanged = false;
     _reset();
   }
 
   ///Resume and rebuild value after paused
   void resume() {
     if (!_pause) return;
-    _hasChanged = true;
+    _pause = false;
     _rebuild();
   }
 

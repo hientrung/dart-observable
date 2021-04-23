@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 1.1.1
+
+Improve performance rebuild Computed by use one Future instead create many CancelableThen
+
 ## 1.1.0
 
 Update to support null safety

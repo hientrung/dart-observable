@@ -293,6 +293,24 @@ void main() {
       expect(b.value, 1);
       expect(b.rebuildCount, 1);
     });
+
+    test('Run compute 1 time depend on nested computed, observable', () async {
+      var a = Observable(1);
+      var b = Computed(() => a.value * 2);
+      var c = Computed(() => b.value * 3 + a.value);
+      expect(c.value, 7);
+      expect(c.rebuildCount, 1);
+      var t = 0;
+      c.changed((v) {
+        t = v;
+      });
+      expect(c.rebuildCount, 1);
+      expect(t, 0);
+      a.value = 2;
+      await Future.delayed(Duration(seconds: 1));
+      expect(t, 14);
+      expect(c.rebuildCount, 2);
+    });
   });
 
   test('runtime computed, don\'t depend on so much', () {
