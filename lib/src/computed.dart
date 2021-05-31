@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:obsobject/obsobject.dart';
+
 import 'observablebase.dart';
 
 ///Auto compute values from some observable by async update function
@@ -15,6 +17,7 @@ class Computed<T> extends ObservableBase<T> {
   ///Function used to calculate value
   final T Function() calculator;
   Future<void>? _asyncRebuild;
+  CancelableThen? _doRebuild;
 
   ///Function called if there are error in procession [calculator]
   final void Function(Object error, StackTrace stack)? onError;
@@ -89,8 +92,13 @@ class Computed<T> extends ObservableBase<T> {
         //force rebuild for observer
         if (hasListener && _asyncRebuild == null && !_pause) {
           //use async rebuild with rate
-          _asyncRebuild =
-              Future.delayed(Duration(milliseconds: rateLimit), _rebuild);
+          //_asyncRebuild avoid loop in sync progress
+          _asyncRebuild = Future.delayed(Duration(milliseconds: 0), () {
+            _doRebuild?.cancel();
+            _doRebuild = CancelableThen(
+                future: Future.delayed(Duration(milliseconds: rateLimit)),
+                then: (_) => _rebuild());
+          });
         }
       }));
     }
@@ -98,6 +106,8 @@ class Computed<T> extends ObservableBase<T> {
 
   void _reset() {
     _asyncRebuild = null;
+    _doRebuild?.cancel();
+    _doRebuild = null;
     for (var sub in _subscriptions) {
       sub.dispose();
     }

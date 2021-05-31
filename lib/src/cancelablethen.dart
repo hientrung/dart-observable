@@ -8,7 +8,7 @@ class CancelableThen<T> {
   final Future<T> future;
 
   ///Future.then callback
-  final dynamic Function(T value) then;
+  final void Function(T value) then;
   bool _isCancel = false;
   bool _isComplete = false;
 
