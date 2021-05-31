@@ -201,6 +201,25 @@ void main() {
       expect(c.value, 4);
     });
 
+    test('listen nested computed', () async {
+      var a = Observable(1);
+      var b = Computed(() => a.value + 1);
+      var c = Computed(() => b.value + 1);
+      var r = [3, 4, 5];
+      var i = 0;
+      c.listen((v) {
+        expect(v, r[i]);
+        i++;
+      });
+      expect(i, 1);
+      a.value = 2;
+      await Future.delayed(Duration(seconds: 1));
+      expect(i, 2);
+      a.value = 3;
+      await Future.delayed(Duration(seconds: 1));
+      expect(i, 3);
+    });
+
     test('writeable', () {
       var a = Observable(1);
       var b = Commission<int>(
