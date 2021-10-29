@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:obsobject/obsobject.dart';
 
+import 'cancelablethen.dart';
 import 'observablebase.dart';
 
 ///Auto compute values from some observable by async update function
