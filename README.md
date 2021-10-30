@@ -60,7 +60,7 @@ for(var i=0; i<1000; i++) a.value=i;
 print(b.rebuildCount); //result 1
 ```
 
-Computed is just give readonly value, thus there are a object Commission used to read+write value
+Computed is just give readonly value, thus there are an object Commission used to read+write value
 
 # Validator
 
@@ -79,7 +79,9 @@ Built-in validate:
 - least: combine and check all validators but it stopped at the first invalid
 - not: negative a validator
 
-Observable has a property **isValid**, it's an observable value of validation status, and it also has features:
+Observable has a property **valid** **error**, they're observables value of validation status.
+
+Validator also has features:
 
 - condition: used to check something before execute validate
 - message: custom message, default message, support for localize
@@ -89,24 +91,23 @@ Example:
 
 ```dart
 //use with Validator....
-var email = Observable('')
-            ..isValid.validator =
-                ValidatorLeast([ValidatorRequired(), ValidatorEmail()]);
+var email = Observable('',
+            validator: ValidatorLeast([ValidatorRequired(), ValidatorEmail()])
+);
 
 //use with Map data config
-var email = Observable('')
-            ..isValid.validator =
-                Validator.convert({
+var email = Observable('',
+            validator: Validator.convert({
 'least': {
     'validators': {'required': 'Email is required', 'email': true}
 }
-                });
+}));
 //current status
-print(email.isValid.value);
+print(email.valid.value);
 //current invalid message
-print(email.isValid.message);
+print(email.error.value);
 //listen on validation
-email.isValid.listen(() {
+email.valid.listen((bool val) {
 //do something
 });
 ```

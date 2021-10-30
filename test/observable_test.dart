@@ -34,43 +34,43 @@ void main() {
     });
 
     test('check value required', () {
-      var a = Observable('test');
-      a.isValid.validator = ValidatorRequired();
-      expect(a.isValid.value, true);
+      var a = Observable('test', validator: ValidatorRequired());
+      expect(a.valid.value, true);
       a.value = '';
-      expect(a.isValid.value, false);
+      expect(a.valid.value, false);
     });
 
-    test('listen on observable, read isValid', () {
-      var a = Observable('test')..isValid.validator = ValidatorRequired();
+    test('listen on observable, read valid', () {
+      var a = Observable('test', validator: ValidatorRequired());
       var c = false;
       a.listen(() {
-        c = a.isValid.value;
+        c = a.valid.value;
       });
       expect(c, true);
       a.value = '';
       expect(c, false);
     });
 
-    test('listen on isValid', () {
-      var a = Observable('test')..isValid.validator = ValidatorRequired();
+    test('listen on valid', () async {
+      var a = Observable('test', validator: ValidatorRequired());
       var c = false;
-      a.isValid.listen(() {
-        c = a.isValid.value;
+      a.valid.listen(() {
+        c = a.valid.value;
       });
       expect(c, true);
       a.value = '';
+      await Future.delayed(Duration(milliseconds: 1));
       expect(c, false);
     });
 
     test('Check valid by async validator by listen on observable', () async {
-      var a = Observable('')
-        ..isValid.validator = ValidatorAsync((v) => Future.value(v == 'test'));
-      var msg = <String>[];
-      var r;
+      var a = Observable('',
+          validator: ValidatorAsync((v) => Future.value(v == 'test')));
+      var msg = <String?>[];
+      var r = false;
       a.listen(() {
-        r = a.isValid.value;
-        msg.add(a.isValid.message);
+        r = a.valid.value;
+        msg.add(a.error.value);
       });
 
       await Future.delayed(Duration(milliseconds: 100));
@@ -116,6 +116,15 @@ void main() {
       expect(b.rebuildCount, 0);
       b.value;
       expect(b.rebuildCount, 1);
+    });
+
+    test('access  nested computed value', () {
+      var a = Observable(1);
+      var b = Computed(() => a.value + 1);
+      var c = Computed(() => b.value + 1);
+      expect(c.value, 3);
+      a.value = 2;
+      expect(c.value, 4);
     });
 
     test('listen is async process', () async {
@@ -231,19 +240,19 @@ void main() {
 
     test('validation', () {
       var a = Observable('');
-      var b = Computed(() => a.value)..isValid.validator = ValidatorRequired();
-      expect(b.isValid.value, false);
+      var b = Computed(() => a.value, validator: ValidatorRequired());
+      expect(b.valid.value, false);
       a.value = 'test';
-      expect(b.isValid.value, true);
+      expect(b.valid.value, true);
       expect(b.rebuildCount, 2);
     });
 
     test('listen on validation', () async {
       var a = Observable('');
-      var b = Computed(() => a.value)..isValid.validator = ValidatorRequired();
-      var c;
-      b.isValid.listen(() {
-        c = b.isValid.value;
+      var b = Computed(() => a.value, validator: ValidatorRequired());
+      var c = false;
+      b.valid.listen(() {
+        c = b.valid.value;
       });
       expect(c, false);
       a.value = 'test';
@@ -303,12 +312,11 @@ void main() {
     test('Do not recompute Computed has isValid but there are no listener',
         () async {
       var a = Observable(0);
-      var b = Computed(() => a.value);
-      b.isValid.validator = ValidatorRequired();
+      var b = Computed(() => a.value, validator: ValidatorRequired());
       a.value = 1;
       await Future.delayed(Duration(seconds: 1));
       expect(b.rebuildCount, 0);
-      expect(b.isValid.value, true);
+      expect(b.valid.value, true);
       expect(b.value, 1);
       expect(b.rebuildCount, 1);
     });

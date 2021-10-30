@@ -1,7 +1,15 @@
+import 'dart:async';
+
 import 'package:obsobject/obsobject.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('FutureOr', () async {
+    FutureOr<int>? a = 1;
+    var t = await a;
+    expect(t, 1);
+  });
+
   test('Default message', () {
     ValidatorRequired.defaultMessage = 'required';
     var v = ValidatorRequired();

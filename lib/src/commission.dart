@@ -1,5 +1,6 @@
 import 'computed.dart';
 import 'observablebase.dart';
+import 'validator.dart';
 
 ///This class inherit from Computed
 ///and provide a function to set property 'value'
@@ -12,7 +13,8 @@ class Commission<T> extends Computed<T> with ObservableWritable<T> {
   final void Function(T val) writer;
 
   ///Create a computed can writeable
-  Commission({required this.reader, required this.writer}) : super(reader);
+  Commission({required this.reader, required this.writer, Validator? validator})
+      : super(reader, validator: validator);
 
   @override
   set value(T val) {

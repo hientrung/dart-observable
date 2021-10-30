@@ -1,9 +1,10 @@
 import 'observablebase.dart';
+import 'validator.dart';
 
 ///A generic observable for a value
 class Observable<T> extends ObservableBase<T> with ObservableWritable<T> {
   ///Create new observable with init value (optional)
-  Observable(T val) : super() {
+  Observable(T val, {Validator? validator}) : super(validator) {
     _value = val;
     _oldValue = val;
   }

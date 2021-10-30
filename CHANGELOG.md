@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## 1.2.0
+
+Fix bug nested computed  
+Remove `CancelableThen` and use `Timer` object  
+Rewrite observable validation, remove `isValid` and changed to computed objects `valid`, `error`
+
 ## 1.1.1
 
 Improve performance rebuild Computed by use one Future instead create many CancelableThen

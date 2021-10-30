@@ -52,9 +52,9 @@ class _ObserverWidgetState<T> extends State<ObserverWidget<T>> {
 
   void _subscribe() {
     _unsubscribe();
-    _subscription = widget.observable.changed(() {
+    _subscription = widget.observable.changed((T val) {
       setState(() {
-        value = widget.observable.value;
+        value = val;
       });
     });
   }

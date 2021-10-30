@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'cancelablethen.dart';
 import 'observablebase.dart';
+import 'validator.dart';
 
 ///Auto compute values from some observable by async update function
 class Computed<T> extends ObservableBase<T> {
@@ -16,8 +16,8 @@ class Computed<T> extends ObservableBase<T> {
 
   ///Function used to calculate value
   final T Function() calculator;
-  Future<void>? _asyncRebuild;
-  CancelableThen? _doRebuild;
+  Timer? _asyncRebuild;
+  Timer? _doRebuild;
 
   ///Function called if there are error in procession [calculator]
   final void Function(Object error, StackTrace stack)? onError;
@@ -26,9 +26,10 @@ class Computed<T> extends ObservableBase<T> {
   int rateLimit;
 
   ///Create a observable that calculate value base on other observables
-  Computed(this.calculator, {this.rateLimit = 0, this.onError})
+  Computed(this.calculator,
+      {this.rateLimit = 0, this.onError, Validator? validator})
       : assert(rateLimit >= 0),
-        super();
+        super(validator);
 
   @override
   T get oldValue => _oldValue;
@@ -56,7 +57,7 @@ class Computed<T> extends ObservableBase<T> {
 
   ///calculate to get value and depend observables
   void _rebuild() {
-    if (!_hasChanged || _pause) return;
+    if (_pause || !_detectChanged()) return;
     _rebuildCount++;
     //print('computed run');
     //clear old depends
@@ -93,18 +94,23 @@ class Computed<T> extends ObservableBase<T> {
         if (hasListener && _asyncRebuild == null && !_pause) {
           //use async rebuild with rate
           //_asyncRebuild avoid loop in sync progress
-          _asyncRebuild = Future.delayed(Duration(milliseconds: 0), () {
+          _asyncRebuild = Timer(Duration.zero, () {
             _doRebuild?.cancel();
-            _doRebuild = CancelableThen(
-                future: Future.delayed(Duration(milliseconds: rateLimit)),
-                then: (_) => _rebuild());
+            _doRebuild = Timer(Duration(milliseconds: rateLimit), _rebuild);
           });
         }
       }));
     }
   }
 
+  bool _detectChanged() {
+    if (_hasChanged) return true;
+    return _depends
+        .any((element) => (element is Computed) && element._detectChanged());
+  }
+
   void _reset() {
+    _asyncRebuild?.cancel();
     _asyncRebuild = null;
     _doRebuild?.cancel();
     _doRebuild = null;
