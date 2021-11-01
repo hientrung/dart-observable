@@ -4,13 +4,13 @@ import 'validator.dart';
 ///A generic observable for a value
 class Observable<T> extends ObservableBase<T> with ObservableWritable<T> {
   ///Create new observable with init value (optional)
-  Observable(T val, {Validator? validator}) : super(validator) {
-    _value = val;
-    _oldValue = val;
-  }
+  Observable(T val, {Validator? validator})
+      : _oldValue = val,
+        _value = val,
+        super(validator);
 
-  late T _oldValue;
-  late T _value;
+  T _oldValue;
+  T _value;
 
   @override
   T get oldValue => _oldValue;

@@ -6,7 +6,7 @@ An observable, computed objects written in Dart with built-in validation
 
 ```yaml
 dependencies:
-  obsobject: ^1.1.0
+  obsobject: ^1.2.0
 ```
 
 # Observable
@@ -42,7 +42,6 @@ var c = Computed(() => a.value ? b.value*10 : 0);
 print(c.value); //result 0, depend on only 'a';
 b.value = 2;
 print(c.value); //result 0, depend on only 'a'
-print(c.rebuildCount); //result 1, it is not recalculate;
 a.value=true;
 print(c.value);//result 20, depend on 'a', 'b'
 ```
@@ -103,12 +102,14 @@ var email = Observable('',
 }
 }));
 //current status
-print(email.valid.value);
+print(email.valid);
 //current invalid message
-print(email.error.value);
+print(email.error);
 //listen on validation
-email.valid.listen((bool val) {
-//do something
+email.listen(() {
+  if (email.valid) {
+    //do something
+  }
 });
 ```
 

@@ -25,11 +25,26 @@ abstract class ObservableBase<T> {
   final _callbacks = <Function>[];
   StreamController? _streamer;
   final Validator? _validator;
-  Computed<String?>? _error;
-  Computed<bool>? _valid;
+  Computed<String>? _validate;
+  String _error = '';
+  bool _selfNotify = false;
 
   ///Create an observable with validator
-  ObservableBase(this._validator);
+  ObservableBase(this._validator) {
+    if (_validator != null) {
+      _validate = Computed(_doValidate);
+      _validate!.listen((String v) {
+        if (v != _error) {
+          _error = v;
+          if (_selfNotify) {
+            _selfNotify = false;
+          } else {
+            _notifyStatus();
+          }
+        }
+      });
+    }
+  }
 
   ///The old value if has change
   T get oldValue;
@@ -76,10 +91,42 @@ abstract class ObservableBase<T> {
     if (!hasListener) {
       return;
     }
+    if (hasValidator) _selfNotify = true;
     for (var cb in _callbacks) {
       _executeCallback(cb);
     }
   }
+
+  ///Error message if value invalid
+  String get error {
+    if (!hasValidator) return '';
+    //mark it depend in Computed context
+    _validate!.value;
+    return _error;
+  }
+
+  ///Manual set error
+  void setError(String msg) {
+    if (msg == _error) return;
+    _error = msg;
+    _notifyStatus();
+  }
+
+  String _doValidate() {
+    return _validator!.validate(value);
+  }
+
+  void _notifyStatus() {
+    if (!hasListener) {
+      return;
+    }
+    for (var cb in _callbacks) {
+      if (cb != _doValidate) _executeCallback(cb);
+    }
+  }
+
+  ///Validate status
+  bool get valid => error.isEmpty;
 
   ///execute callback function, it can has 0, 1, 2 parameters
   void _executeCallback(Function cb) {
@@ -117,28 +164,11 @@ abstract class ObservableBase<T> {
   ///Check has using validate value
   bool get hasValidator => _validator != null;
 
-  ///An error message if observable value is invalid
-  Computed<String?> get error {
-    _error ??= Computed<String?>(() {
-      if (!hasValidator) return null;
-      return _validator!.validate(value);
-    });
-    return _error!;
-  }
-
-  ///Valid state of observable
-  Computed<bool> get valid {
-    _valid ??= Computed<bool>(() => error.value == null);
-    return _valid!;
-  }
-
   ///Close stream (if used) and all listeners on this observable
   void dispose() {
     _streamer?.close();
     _streamer = null;
     _callbacks.clear();
-    _error?.dispose();
-    _valid?.dispose();
   }
 
   @override

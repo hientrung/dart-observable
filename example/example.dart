@@ -12,6 +12,6 @@ class User {
   late Computed<String> fullName =
       Computed<String>(() => '${firstName.value}  ${lastName.value}');
 
-  late Computed<bool> valid = Computed<bool>(
-      () => firstName.valid.value && lastName.valid.value && email.valid.value);
+  late Computed<bool> valid =
+      Computed<bool>(() => firstName.valid && lastName.valid && email.valid);
 }

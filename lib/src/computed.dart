@@ -5,8 +5,8 @@ import 'validator.dart';
 
 ///Auto compute values from some observable by async update function
 class Computed<T> extends ObservableBase<T> {
-  late T _oldValue;
-  late T _value;
+  T? _oldValue;
+  T? _value;
   var _rebuildCount = 0;
   var _pause = false;
 
@@ -32,7 +32,7 @@ class Computed<T> extends ObservableBase<T> {
         super(validator);
 
   @override
-  T get oldValue => _oldValue;
+  T get oldValue => _oldValue as T;
 
   @override
   T get peek {
@@ -40,7 +40,7 @@ class Computed<T> extends ObservableBase<T> {
     if (_rebuildCount == 0) {
       throw 'The computation function didn\'t run, maybe pausing';
     }
-    return _value;
+    return _value as T;
   }
 
   @override
@@ -76,11 +76,7 @@ class Computed<T> extends ObservableBase<T> {
     //set false here to avoid access this computed again in listen
     _hasChanged = false;
 
-    if (_rebuildCount == 1) {
-      _oldValue = val as T;
-      _value = _oldValue;
-      notify();
-    } else if (val != _value) {
+    if (val != _value) {
       _oldValue = _value;
       _value = val as T;
       notify();

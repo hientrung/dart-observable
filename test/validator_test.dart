@@ -4,10 +4,10 @@ import 'package:obsobject/obsobject.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('FutureOr', () async {
+  test('FutureOr', () {
     FutureOr<int>? a = 1;
-    var t = await a;
-    expect(t, 1);
+    expect(a, 1);
+    expect(a is Future, false);
   });
 
   test('Default message', () {
@@ -19,7 +19,7 @@ void main() {
 
   test('Condition', () {
     var v = ValidatorRequired()..condition = () => false;
-    expect(v.validate(null), null);
+    expect(v.validate(null), '');
   });
 
   test('Required', () {
@@ -31,33 +31,33 @@ void main() {
   test('Range', () {
     var v = ValidatorRange(max: 10);
     var s = v.validate(11);
-    expect(s, isNotNull);
+    expect(s, isNotEmpty);
     s = v.validate(8.0);
-    expect(s, null);
+    expect(s, '');
     v.max = 5;
     v.min = 1;
     s = v.validate('value test');
     print(s);
-    expect(s, isNotNull);
+    expect(s, isNotEmpty);
     s = v.validate('value');
-    expect(s, null);
+    expect(s, '');
     //[1-5]
-    expect(v.validate([]), isNotNull);
-    expect(v.validate([1, 2]), null);
+    expect(v.validate([]), isNotEmpty);
+    expect(v.validate([1, 2]), '');
   });
 
   test('Pattern', () {
-    expect(ValidatorPattern(RegExp(r'^\w*$')).validate('test'), null);
+    expect(ValidatorPattern(RegExp(r'^\w*$')).validate('test'), '');
     expect(
         ValidatorPattern(RegExp(
           r'^\w*$',
         )).validate('tes+t'),
-        isNotNull);
+        isNotEmpty);
   });
 
   test('Email', () {
-    expect(ValidatorEmail().validate('mr.test@test.com'), null);
-    expect(ValidatorEmail().validate('1mr.test'), isNotNull);
+    expect(ValidatorEmail().validate('mr.test@test.com'), '');
+    expect(ValidatorEmail().validate('1mr.test'), isNotEmpty);
   });
 
   test('Custom', () {
@@ -65,36 +65,23 @@ void main() {
         ValidatorCustom((v) {
           return true;
         }).validate(''),
-        null);
+        '');
     expect(
         ValidatorCustom((v) {
           return false;
         }).validate(''),
-        isNotNull);
-  });
-
-  test('Async', () async {
-    var a = 'test';
-    var v = ValidatorAsync((val) => Future.value(a == 'test'))
-      ..rateLimit = 200
-      ..messageAsync = 'running';
-    expect(v.validate(a), 'running');
-    await Future.delayed(Duration(seconds: 1));
-    expect(v.validate(a), null);
-    a = 'fail';
-    await Future.delayed(Duration(seconds: 1));
-    expect(v.validate(a), isNotNull);
+        isNotEmpty);
   });
 
   test('All', () {
     var v = '';
     var a = ValidatorAll([ValidatorRequired(), ValidatorEmail()]);
-    expect(a.validate(v), isNotNull);
+    expect(a.validate(v), isNotEmpty);
     v = 'test@test-com';
-    expect(a.validate(v), isNotNull);
+    expect(a.validate(v), isNotEmpty);
     print(a.validate(v));
     v = 'test@test.com';
-    expect(a.validate(v), null);
+    expect(a.validate(v), '');
   });
 
   test('Least', () {
@@ -106,25 +93,25 @@ void main() {
     expect(a.validate(''), 'required');
     expect(a.validate('test@'), 'email');
     expect(a.validate('a@test.com'), 'test');
-    expect(a.validate('test@test.com'), null);
+    expect(a.validate('test@test.com'), '');
   });
 
   test('Not + Contains', () {
     var a = ValidatorNot(ValidatorContains([1, 2, 3]));
-    expect(a.validate(0), null);
-    expect(a.validate(2), isNotNull);
+    expect(a.validate(0), '');
+    expect(a.validate(2), isNotEmpty);
   });
 
   test('Unique', () {
     var a = ValidatorUnique([1, 2, 3, 4]);
-    expect(a.validate(1), isNotNull);
-    expect(a.validate(10), null);
+    expect(a.validate(1), isNotEmpty);
+    expect(a.validate(10), '');
   });
 
   test('True', () {
     var a = ValidatorTrue();
-    expect(a.validate('test'), isNotNull);
-    expect(a.validate(true), null);
+    expect(a.validate('test'), isNotEmpty);
+    expect(a.validate(true), '');
   });
 
   test('Convert Map', () {
@@ -146,11 +133,11 @@ void main() {
         }
       }
     })!;
-    expect(a.validate(''), null);
+    expect(a.validate(''), '');
     t = true;
-    expect(a.validate(''), isNotNull);
-    expect(a.validate('test@'), isNotNull);
-    expect(a.validate('test@test.com'), isNotNull);
-    expect(a.validate('a@test.com'), null);
+    expect(a.validate(''), isNotEmpty);
+    expect(a.validate('test@'), isNotEmpty);
+    expect(a.validate('test@test.com'), isNotEmpty);
+    expect(a.validate('a@test.com'), '');
   });
 }

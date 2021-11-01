@@ -4,7 +4,8 @@
 
 Fix bug nested computed  
 Remove `CancelableThen` and use `Timer` object  
-Rewrite observable validation, remove `isValid` and changed to computed objects `valid`, `error`
+Rewrite observable validation, remove `isValid` and changed to computed objects `valid`, `error`. We also can `setError` to mark observable invalid. When object changed valid, error status, then it also call notify change  
+Remove validation async since it require setup UI while validating, so it should create a Computed with rateLimit, then listen on this Computed to validate value via async process and it can update some status objects to change UI
 
 ## 1.1.1
 
