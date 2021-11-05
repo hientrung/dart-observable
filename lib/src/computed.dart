@@ -163,4 +163,16 @@ class Computed<T> extends ObservableBase<T> {
       return ignoreDependencies(callback);
     });
   }
+
+  ///Create a computed used to listen on specific observable
+  static Computed<int> version(List<ObservableBase> depends) {
+    var ver = 0;
+    return Computed(() {
+      //listen all
+      for (var d in depends) {
+        d.value;
+      }
+      return ++ver;
+    });
+  }
 }

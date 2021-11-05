@@ -25,15 +25,15 @@ abstract class ObservableBase<T> {
   final _callbacks = <Function>[];
   StreamController? _streamer;
   final Validator? _validator;
-  Computed<String>? _validate;
-  String _error = '';
+  Computed<String?>? _validate;
+  String? _error = '';
   bool _selfNotify = false;
 
   ///Create an observable with validator
   ObservableBase(this._validator) {
     if (_validator != null) {
       _validate = Computed(_doValidate);
-      _validate!.listen((String v) {
+      _validate!.listen((String? v) {
         if (v != _error) {
           _error = v;
           if (_selfNotify) {
@@ -97,22 +97,22 @@ abstract class ObservableBase<T> {
     }
   }
 
-  ///Error message if value invalid
-  String get error {
-    if (!hasValidator) return '';
-    //mark it depend in Computed context
+  ///Error message if value invalid, otherwise is null
+  String? get error {
+    if (!hasValidator) return null;
+    //mark it depend in Computed context and update if has changed
     _validate!.value;
     return _error;
   }
 
-  ///Manual set error
-  void setError(String msg) {
+  ///Manual set error, used to update error message by validate outsite
+  void setError(String? msg) {
     if (msg == _error) return;
     _error = msg;
     _notifyStatus();
   }
 
-  String _doValidate() {
+  String? _doValidate() {
     return _validator!.validate(value);
   }
 
@@ -126,7 +126,7 @@ abstract class ObservableBase<T> {
   }
 
   ///Validate status
-  bool get valid => error.isEmpty;
+  bool get valid => error != null;
 
   ///execute callback function, it can has 0, 1, 2 parameters
   void _executeCallback(Function cb) {
@@ -168,6 +168,8 @@ abstract class ObservableBase<T> {
   void dispose() {
     _streamer?.close();
     _streamer = null;
+    _validate?.dispose();
+    _validate = null;
     _callbacks.clear();
   }
 

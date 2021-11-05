@@ -22,20 +22,19 @@ abstract class Validator {
   ///This used in subclass only
   ///
   ///For internal use
-  String _doValidate(dynamic value);
+  String? _doValidate(dynamic value);
 
   ///Message used return when [validate] need return invalid state
-  String message = '';
+  String? message;
 
   ///Used to do some check context before run [validate].
   ///
   ///If it return false then [validate] will ignored
   bool Function()? condition;
 
-  ///Do check [value], return text (not empty) if [value] is incorrect,
-  ///else return empty
-  String validate(dynamic value) {
-    if (condition != null && !condition!()) return '';
+  ///Do check [value], return text if [value] is invalid, otherwise is null
+  String? validate(dynamic value) {
+    if (condition != null && !condition!()) return null;
     return _doValidate(value);
   }
 
@@ -142,7 +141,7 @@ abstract class Validator {
 class ValidatorAll extends Validator {
   ///Default invalid message
   ///it will be used if [message] doesn't has value
-  static String defaultMessage = '';
+  static String? defaultMessage;
 
   ///Validators will be check
   List<Validator>? validators;
@@ -151,19 +150,17 @@ class ValidatorAll extends Validator {
   ValidatorAll([this.validators]);
 
   @override
-  String _doValidate(dynamic value) {
-    if (validators == null || validators!.isEmpty) return '';
+  String? _doValidate(dynamic value) {
+    if (validators == null || validators!.isEmpty) return null;
     var msg = <String>[];
     for (var vd in validators!) {
       var v = vd.validate(value);
-      if (v.isNotEmpty) msg.add(v);
+      if (v != null) msg.add(v);
     }
     if (msg.isEmpty) {
-      return '';
+      return null;
     } else {
-      if (message.isNotEmpty) return message;
-      if (defaultMessage.isNotEmpty) return defaultMessage;
-      return msg.join('\n');
+      return message ?? defaultMessage ?? msg.join('\n');
     }
   }
 
@@ -186,7 +183,7 @@ class ValidatorAll extends Validator {
 class ValidatorLeast extends Validator {
   ///Default invalid message
   ///it will be used if [message] doesn't has value
-  static String defaultMessage = '';
+  static String? defaultMessage;
 
   ///Validators will be check
   List<Validator>? validators;
@@ -196,17 +193,15 @@ class ValidatorLeast extends Validator {
   ValidatorLeast([this.validators]);
 
   @override
-  String _doValidate(dynamic value) {
-    if (validators == null || validators!.isEmpty) return '';
+  String? _doValidate(dynamic value) {
+    if (validators == null || validators!.isEmpty) return null;
     for (var vd in validators!) {
       var v = vd.validate(value);
-      if (v.isNotEmpty) {
-        if (message.isNotEmpty) return message;
-        if (defaultMessage.isNotEmpty) return defaultMessage;
-        return v;
+      if (v != null) {
+        return message ?? defaultMessage ?? v;
       }
     }
-    return '';
+    return null;
   }
 
   ///Register function to convert from a [Map] data
@@ -237,14 +232,13 @@ class ValidatorNot extends Validator {
   ValidatorNot([this.source]);
 
   @override
-  String _doValidate(dynamic value) {
-    if (source == null) return '';
+  String? _doValidate(dynamic value) {
+    if (source == null) return null;
     var s = source!.validate(value);
-    if (s.isNotEmpty) {
-      return '';
+    if (s != null) {
+      return null;
     } else {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     }
   }
 
@@ -276,14 +270,13 @@ class ValidatorRequired extends Validator {
   static String defaultMessage = 'Field value is required.';
 
   @override
-  String _doValidate(dynamic value) {
+  String? _doValidate(dynamic value) {
     if (value == null ||
         (value is String && value.isEmpty) ||
         ((value is int || value is double) && value == 0)) {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -313,8 +306,8 @@ class ValidatorRange extends Validator {
   ValidatorRange({this.min, this.max});
 
   @override
-  String _doValidate(dynamic value) {
-    if (value == null || (value is String && value.isEmpty)) return '';
+  String? _doValidate(dynamic value) {
+    if (value == null || (value is String && value.isEmpty)) return null;
     dynamic v;
     if (value is String || value is List) {
       v = value.length;
@@ -322,11 +315,11 @@ class ValidatorRange extends Validator {
       v = value;
     }
     if ((min != null && v < min) || (max != null && v > max)) {
-      return (message.isNotEmpty ? message : defaultMessage)
+      return (message ?? defaultMessage)
           .replaceAll(r'{0}', min.toString())
           .replaceAll(r'{1}', max.toString());
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -361,11 +354,11 @@ class ValidatorPattern extends Validator {
   ValidatorPattern([this.pattern]);
 
   @override
-  String _doValidate(dynamic value) {
+  String? _doValidate(dynamic value) {
     if (pattern == null ||
         value == null ||
         (value is String && value.isEmpty) ||
-        (pattern is String && pattern.isEmpty)) return '';
+        (pattern is String && pattern.isEmpty)) return null;
     RegExp reg;
     if (pattern is String) {
       reg = RegExp(pattern);
@@ -375,10 +368,9 @@ class ValidatorPattern extends Validator {
       throw 'Pattern should be a String or RegExp';
     }
     if (!reg.hasMatch(value)) {
-      return (message.isNotEmpty ? message : defaultMessage)
-          .replaceAll(r'{0}', pattern.toString());
+      return (message ?? defaultMessage).replaceAll(r'{0}', pattern.toString());
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -404,14 +396,13 @@ class ValidatorEmail extends Validator {
   static String defaultMessage = 'Invalid email';
 
   @override
-  String _doValidate(dynamic value) {
-    if (value == null || value.isEmpty) return '';
+  String? _doValidate(dynamic value) {
+    if (value == null || value.isEmpty) return null;
     var reg = RegExp(r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$');
     if (!reg.hasMatch(value)) {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -436,17 +427,16 @@ class ValidatorContains extends Validator {
   ValidatorContains([this.source]);
 
   @override
-  String _doValidate(dynamic value) {
+  String? _doValidate(dynamic value) {
     if (value == null ||
         source == null ||
         (source is String && source.isEmpty)) {
-      return '';
+      return null;
     }
     if (source.contains(value)) {
-      return '';
+      return null;
     } else {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     }
   }
 
@@ -479,17 +469,16 @@ class ValidatorUnique extends Validator {
   ValidatorUnique([this.source]);
 
   @override
-  String _doValidate(dynamic value) {
+  String? _doValidate(dynamic value) {
     if (value == null ||
         source == null ||
         (source is String && source.isEmpty)) {
-      return '';
+      return null;
     }
     if (!source.contains(value)) {
-      return '';
+      return null;
     } else {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     }
   }
 
@@ -515,12 +504,11 @@ class ValidatorTrue extends Validator {
   static String defaultMessage = 'Field value is invalid';
 
   @override
-  String _doValidate(dynamic value) {
+  String? _doValidate(dynamic value) {
     if (value != true) {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     } else {
-      return '';
+      return null;
     }
   }
 
@@ -545,13 +533,12 @@ class ValidatorCustom extends Validator {
   ValidatorCustom([this.valid]);
 
   @override
-  String _doValidate(dynamic value) {
-    if (value == null || valid == null) return '';
+  String? _doValidate(dynamic value) {
+    if (value == null || valid == null) return null;
     if (!valid!(value)) {
-      if (message.isNotEmpty) return message;
-      return defaultMessage;
+      return message ?? defaultMessage;
     } else {
-      return '';
+      return null;
     }
   }
 
