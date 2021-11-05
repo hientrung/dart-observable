@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 1.2.1
+
+Fix bug validate observable value
+
 ## 1.2.0
 
 Fix bug nested computed  

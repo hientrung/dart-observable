@@ -19,7 +19,7 @@ void main() {
 
   test('Condition', () {
     var v = ValidatorRequired()..condition = () => false;
-    expect(v.validate(null), '');
+    expect(v.validate(null), null);
   });
 
   test('Required', () {
@@ -33,21 +33,21 @@ void main() {
     var s = v.validate(11);
     expect(s, isNotEmpty);
     s = v.validate(8.0);
-    expect(s, '');
+    expect(s, null);
     v.max = 5;
     v.min = 1;
     s = v.validate('value test');
     print(s);
     expect(s, isNotEmpty);
     s = v.validate('value');
-    expect(s, '');
+    expect(s, null);
     //[1-5]
     expect(v.validate([]), isNotEmpty);
-    expect(v.validate([1, 2]), '');
+    expect(v.validate([1, 2]), null);
   });
 
   test('Pattern', () {
-    expect(ValidatorPattern(RegExp(r'^\w*$')).validate('test'), '');
+    expect(ValidatorPattern(RegExp(r'^\w*$')).validate('test'), null);
     expect(
         ValidatorPattern(RegExp(
           r'^\w*$',
@@ -56,7 +56,7 @@ void main() {
   });
 
   test('Email', () {
-    expect(ValidatorEmail().validate('mr.test@test.com'), '');
+    expect(ValidatorEmail().validate('mr.test@test.com'), null);
     expect(ValidatorEmail().validate('1mr.test'), isNotEmpty);
   });
 
@@ -65,7 +65,7 @@ void main() {
         ValidatorCustom((v) {
           return true;
         }).validate(''),
-        '');
+        null);
     expect(
         ValidatorCustom((v) {
           return false;
@@ -81,7 +81,7 @@ void main() {
     expect(a.validate(v), isNotEmpty);
     print(a.validate(v));
     v = 'test@test.com';
-    expect(a.validate(v), '');
+    expect(a.validate(v), null);
   });
 
   test('Least', () {
@@ -93,25 +93,25 @@ void main() {
     expect(a.validate(''), 'required');
     expect(a.validate('test@'), 'email');
     expect(a.validate('a@test.com'), 'test');
-    expect(a.validate('test@test.com'), '');
+    expect(a.validate('test@test.com'), null);
   });
 
   test('Not + Contains', () {
     var a = ValidatorNot(ValidatorContains([1, 2, 3]));
-    expect(a.validate(0), '');
+    expect(a.validate(0), null);
     expect(a.validate(2), isNotEmpty);
   });
 
   test('Unique', () {
     var a = ValidatorUnique([1, 2, 3, 4]);
     expect(a.validate(1), isNotEmpty);
-    expect(a.validate(10), '');
+    expect(a.validate(10), null);
   });
 
   test('True', () {
     var a = ValidatorTrue();
     expect(a.validate('test'), isNotEmpty);
-    expect(a.validate(true), '');
+    expect(a.validate(true), null);
   });
 
   test('Convert Map', () {
@@ -133,11 +133,11 @@ void main() {
         }
       }
     })!;
-    expect(a.validate(''), '');
+    expect(a.validate(''), null);
     t = true;
     expect(a.validate(''), isNotEmpty);
     expect(a.validate('test@'), isNotEmpty);
     expect(a.validate('test@test.com'), isNotEmpty);
-    expect(a.validate('a@test.com'), '');
+    expect(a.validate('a@test.com'), null);
   });
 }

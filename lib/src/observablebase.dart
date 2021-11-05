@@ -26,20 +26,20 @@ abstract class ObservableBase<T> {
   StreamController? _streamer;
   final Validator? _validator;
   Computed<String?>? _validate;
-  String? _error = '';
+  String? _error;
   bool _selfNotify = false;
 
   ///Create an observable with validator
   ObservableBase(this._validator) {
     if (_validator != null) {
-      _validate = Computed(_doValidate);
+      _validate = Computed(() => _validator!.validate(value));
       _validate!.listen((String? v) {
         if (v != _error) {
           _error = v;
           if (_selfNotify) {
             _selfNotify = false;
           } else {
-            _notifyStatus();
+            notify();
           }
         }
       });
@@ -109,24 +109,11 @@ abstract class ObservableBase<T> {
   void setError(String? msg) {
     if (msg == _error) return;
     _error = msg;
-    _notifyStatus();
-  }
-
-  String? _doValidate() {
-    return _validator!.validate(value);
-  }
-
-  void _notifyStatus() {
-    if (!hasListener) {
-      return;
-    }
-    for (var cb in _callbacks) {
-      if (cb != _doValidate) _executeCallback(cb);
-    }
+    notify();
   }
 
   ///Validate status
-  bool get valid => error != null;
+  bool get valid => error == null;
 
   ///execute callback function, it can has 0, 1, 2 parameters
   void _executeCallback(Function cb) {
