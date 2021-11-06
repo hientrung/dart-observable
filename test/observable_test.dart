@@ -107,6 +107,33 @@ void main() {
       await Future.delayed(Duration(milliseconds: 100));
       expect(c, 1);
     });
+
+    test('Validate base on other observable', () async {
+      var a = Observable(false);
+      var t = 0;
+      var b = Observable(
+        '',
+        validator: ValidatorRequired()
+          ..condition = () {
+            t++;
+            return a.value;
+          },
+      );
+      var c = 0;
+      b.changed(() => c++);
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, 0);
+      expect(t, 1);
+      expect(b.valid, true);
+      a.value = true;
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, 1);
+      expect(t, 2);
+      expect(b.valid, false);
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, 1);
+      expect(t, 2);
+    });
   });
 
   group('Computed', () {
