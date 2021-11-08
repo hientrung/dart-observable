@@ -134,6 +134,18 @@ void main() {
       expect(c, 1);
       expect(t, 2);
     });
+
+    test('Ratelimit', () async {
+      var a = Observable('', rateLimit: 500);
+      var c = 0;
+      a.changed(() => c++);
+      a.value = 'test';
+      await Future.delayed(Duration(milliseconds: 200));
+      a.value = 'test test';
+      expect(c, 0);
+      await Future.delayed(Duration(milliseconds: 600));
+      expect(c, 1);
+    });
   });
 
   group('Computed', () {
