@@ -164,6 +164,8 @@ abstract class ObservableBase<T> {
   String toString() {
     return '${runtimeType.toString()}(${peek.toString()})';
   }
+
+  T call() => value;
 }
 
 ///Class used to mixin with observable can set value

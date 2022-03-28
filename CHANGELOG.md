@@ -1,5 +1,14 @@
 # CHANGE LOG
 
+## 1.2.3
+
+Add callable class.
+
+```dart
+final a = Observable(0);
+a(); //similar a.value
+```
+
 ## 1.2.2
 
 Add rateLimit for class Observable

@@ -430,4 +430,11 @@ void main() {
     await Future.delayed(Duration(seconds: 1));
     expect(c, 2);
   });
+
+  test('callable class', () {
+    final a = Observable(0);
+    final b = Computed(() => a() * 2);
+    a.value = 2;
+    expect(b.value, 4);
+  });
 }
