@@ -1,3 +1,5 @@
+import 'dart:async';
+
 ///Interface to register a subclass [Validator]
 ///to determine how to create it from a [Map] data
 class ValidatorRegister {
@@ -22,7 +24,7 @@ abstract class Validator {
   ///This used in subclass only
   ///
   ///For internal use
-  String? _doValidate(dynamic value);
+  FutureOr<String?> _doValidate(dynamic value);
 
   ///Message used return when [validate] need return invalid state
   String? message;
@@ -33,7 +35,7 @@ abstract class Validator {
   bool Function()? condition;
 
   ///Do check [value], return text if [value] is invalid, otherwise is null
-  String? validate(dynamic value) {
+  FutureOr<String?> validate(dynamic value) {
     if (condition != null && !condition!()) return null;
     return _doValidate(value);
   }
@@ -55,6 +57,7 @@ abstract class Validator {
       ValidatorUnique.register();
       ValidatorTrue.register();
       ValidatorCustom.register();
+      ValidatorAsync.register();
     }
     return _registered!;
   }
@@ -150,9 +153,9 @@ class ValidatorAll extends Validator {
   ValidatorAll([this.validators]);
 
   @override
-  String? _doValidate(dynamic value) {
+  FutureOr<String?> _doValidate(dynamic value) {
     if (validators == null || validators!.isEmpty) return null;
-    var msg = <String>[];
+    var msg = <FutureOr<String?>>[];
     for (var vd in validators!) {
       var v = vd.validate(value);
       if (v != null) msg.add(v);
@@ -160,7 +163,18 @@ class ValidatorAll extends Validator {
     if (msg.isEmpty) {
       return null;
     } else {
-      return message ?? defaultMessage ?? msg.join('\n');
+      if (msg.any((it) => it is Future)) {
+        return Future<String?>(() async {
+          var err = <String>[];
+          for (var m in msg) {
+            var s = await m;
+            if (s != null) err.add(s);
+          }
+          return message ?? defaultMessage ?? err.join('\n');
+        });
+      } else {
+        return message ?? defaultMessage ?? msg.cast<String>().join('\n');
+      }
     }
   }
 
@@ -193,13 +207,26 @@ class ValidatorLeast extends Validator {
   ValidatorLeast([this.validators]);
 
   @override
-  String? _doValidate(dynamic value) {
+  FutureOr<String?> _doValidate(dynamic value) {
     if (validators == null || validators!.isEmpty) return null;
+
+    var msg = <FutureOr<String?>>[];
     for (var vd in validators!) {
       var v = vd.validate(value);
-      if (v != null) {
+      if (v != null && v is String) {
         return message ?? defaultMessage ?? v;
+      } else if (v != null && v is Future) {
+        msg.add(v);
       }
+    }
+    if (msg.isNotEmpty) {
+      return Future<String?>(() async {
+        for (var m in msg) {
+          var s = await m;
+          if (s != null) return message ?? defaultMessage ?? s;
+        }
+        return null;
+      });
     }
     return null;
   }
@@ -232,13 +259,22 @@ class ValidatorNot extends Validator {
   ValidatorNot([this.source]);
 
   @override
-  String? _doValidate(dynamic value) {
+  FutureOr<String?> _doValidate(dynamic value) {
     if (source == null) return null;
-    var s = source!.validate(value);
-    if (s != null) {
-      return null;
-    } else {
+    var msg = source!.validate(value);
+    if (msg != null && msg is Future) {
+      return Future<String?>(() async {
+        var s = await msg;
+        if (s != null) {
+          return null;
+        } else {
+          return message ?? defaultMessage;
+        }
+      });
+    } else if (msg == null) {
       return message ?? defaultMessage;
+    } else {
+      return null;
     }
   }
 
@@ -278,6 +314,11 @@ class ValidatorRequired extends Validator {
     } else {
       return null;
     }
+  }
+
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
   }
 
   ///Register function to convert from a [Map] data
@@ -321,6 +362,11 @@ class ValidatorRange extends Validator {
     } else {
       return null;
     }
+  }
+
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
   }
 
   ///Register function to convert from a [Map] data
@@ -374,6 +420,11 @@ class ValidatorPattern extends Validator {
     }
   }
 
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
+  }
+
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['pattern'] = ValidatorRegister(
@@ -404,6 +455,11 @@ class ValidatorEmail extends Validator {
     } else {
       return null;
     }
+  }
+
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
   }
 
   ///Register function to convert from a [Map] data
@@ -438,6 +494,11 @@ class ValidatorContains extends Validator {
     } else {
       return message ?? defaultMessage;
     }
+  }
+
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
   }
 
   ///Register function to convert from a [Map] data
@@ -482,6 +543,11 @@ class ValidatorUnique extends Validator {
     }
   }
 
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
+  }
+
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['unique'] = ValidatorRegister(
@@ -510,6 +576,11 @@ class ValidatorTrue extends Validator {
     } else {
       return null;
     }
+  }
+
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
   }
 
   ///Register function to convert from a [Map] data
@@ -542,12 +613,55 @@ class ValidatorCustom extends Validator {
     }
   }
 
+  @override
+  String? validate(dynamic value) {
+    return super.validate(value) as String?;
+  }
+
   ///Register function to convert from a [Map] data
   static void register() {
     Validator.registered['custom'] = ValidatorRegister(
         creator: () => ValidatorCustom(),
         mapping: (vd, k, v) {
           var el = vd as ValidatorCustom;
+          switch (k) {
+            case 'valid':
+              el.valid = v;
+              break;
+          }
+        });
+  }
+}
+
+///Check value by a async function, skip check null already
+class ValidatorAsync extends Validator {
+  ///Default invalid message
+  ///it will be used if [message] doesn't has value
+  static String defaultMessage = 'Field value is invalid';
+
+  ///Function used to check value.
+  ///Return 'true' if value is valid, else 'false'
+  Future<bool> Function(dynamic value)? valid;
+
+  ///Create [Validator] can check value by a async function [valid]
+  ValidatorAsync([this.valid]);
+
+  @override
+  FutureOr<String?> _doValidate(dynamic value) async {
+    if (value == null || valid == null) return null;
+    if (!await valid!(value)) {
+      return message ?? defaultMessage;
+    } else {
+      return null;
+    }
+  }
+
+  ///Register function to convert from a [Map] data
+  static void register() {
+    Validator.registered['async'] = ValidatorRegister(
+        creator: () => ValidatorAsync(),
+        mapping: (vd, k, v) {
+          var el = vd as ValidatorAsync;
           switch (k) {
             case 'valid':
               el.valid = v;

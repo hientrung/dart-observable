@@ -140,4 +140,31 @@ void main() {
     expect(a.validate('test@test.com'), isNotEmpty);
     expect(a.validate('a@test.com'), null);
   });
+
+  test('Async', () async {
+    var a = ValidatorAsync(
+        (v) => Future.delayed(Duration(milliseconds: 100), () => false));
+    a.message = "failed";
+    var e = await a.validate('test');
+    expect(e, a.message);
+  });
+
+  test('Combine async and required', () async {
+    var a = Validator.convert({
+      "least": {
+        "validators": {
+          "required": "required",
+          "async": {
+            "msg": "test",
+            "valid": (v) =>
+                Future.delayed(Duration(milliseconds: 100), () => false)
+          }
+        }
+      }
+    })!;
+    expect(await a.validate(''), 'required');
+    expect(await a.validate('asdf'), 'test');
+    var b = ValidatorNot(a);
+    expect(await b.validate('as'), isNull);
+  });
 }
