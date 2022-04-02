@@ -366,6 +366,20 @@ void main() {
       expect(t, 14);
       expect(c.rebuildCount, 2);
     });
+
+    test('Listen computed for async computation', () async {
+      var a = Observable(1);
+      var b = Computed<int>(() async {
+        return await Future.delayed(
+            Duration(milliseconds: 200), () => a.value * 2);
+      });
+      var arr = [2, 6];
+      var i = 0;
+      b.listen((int v) => expect(v, arr[i]));
+      a.value = 3;
+      i = 1;
+      await Future.delayed(Duration(seconds: 1));
+    });
   });
 
   test('runtime computed, don\'t depend on so much', () {
@@ -396,6 +410,7 @@ void main() {
           '$c observables then all update value, runtime all computed '
           '${w.elapsedMilliseconds}ms');
       print('rebuild ${b[0].rebuildCount}');
+      expect(w.elapsedMilliseconds, lessThan(200));
       cm.complete();
     });
     w.start();

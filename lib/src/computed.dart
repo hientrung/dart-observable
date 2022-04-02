@@ -5,17 +5,18 @@ import 'validator.dart';
 
 ///Auto compute values from some observable by async update function
 class Computed<T> extends ObservableBase<T> {
-  T? _oldValue;
-  T? _value;
+  late T _oldValue;
+  late T _value;
   var _rebuildCount = 0;
   var _pause = false;
 
   final _depends = <ObservableBase>[];
   final _subscriptions = <Subscription>[];
   var _hasChanged = true;
+  var _running = false;
 
   ///Function used to calculate value
-  final T Function() calculator;
+  final FutureOr<T> Function() calculator;
   Timer? _asyncRebuild;
   Timer? _doRebuild;
 
@@ -32,7 +33,12 @@ class Computed<T> extends ObservableBase<T> {
         super(validator);
 
   @override
-  T get oldValue => _oldValue as T;
+  T get oldValue {
+    if (_rebuildCount == 0) {
+      throw 'The computation function didn\'t run, maybe pausing';
+    }
+    return _oldValue;
+  }
 
   @override
   T get peek {
@@ -40,23 +46,28 @@ class Computed<T> extends ObservableBase<T> {
     if (_rebuildCount == 0) {
       throw 'The computation function didn\'t run, maybe pausing';
     }
-    return _value as T;
+    if (_running) {
+      throw 'The computation function is running. You can not access value';
+    }
+    return _value;
   }
 
   @override
   Subscription listen(Function callback) {
+    final s = super.changed(callback);
     _rebuild();
-    return super.listen(callback);
+    return s;
   }
 
   @override
   Subscription changed(Function callback) {
-    _rebuild();
-    return super.changed(callback);
+    final s = super.changed(callback);
+    _rebuild(true);
+    return s;
   }
 
   ///calculate to get value and depend observables
-  void _rebuild() {
+  void _rebuild([bool skipNotify = false]) {
     if (_pause || !_detectChanged()) return;
     _rebuildCount++;
     //print('computed run');
@@ -67,18 +78,33 @@ class Computed<T> extends ObservableBase<T> {
     //Future/Stream async are running in zone context too
     //so it can get dependencies but it don't get value (it return already)
     var ok = true;
+    _running = true;
     var val = runZonedGuarded(calculator, (err, stack) {
       ok = false;
       if (onError != null) onError!(err, stack);
     }, zoneValues: {'computedDepends': _depends, 'computed': this});
     if (!ok) return;
 
+    if (val is Future) {
+      var v = val as Future<T>;
+      v.then((_v) => _setValue(_v, skipNotify));
+    } else {
+      _setValue(val as T, skipNotify);
+    }
+  }
+
+  void _setValue(T val, bool skipNotify) {
     //set false here to avoid access this computed again in listen
     _hasChanged = false;
+    _running = false;
 
-    if (val != _value) {
+    if (rebuildCount == 1) {
+      _oldValue = val;
+      _value = val;
+      if (!skipNotify) notify();
+    } else if (val != _value) {
       _oldValue = _value;
-      _value = val as T;
+      _value = val;
       notify();
     }
 
