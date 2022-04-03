@@ -116,6 +116,7 @@ class Computed<T> extends ObservableBase<T> {
         if (hasListener && _asyncRebuild == null && !_pause) {
           //use async rebuild with rate
           //_asyncRebuild avoid loop in sync progress
+          //that there are many depends changed toghether
           _asyncRebuild = Timer(Duration.zero, () {
             _doRebuild?.cancel();
             _doRebuild = Timer(Duration(milliseconds: rateLimit), _rebuild);
@@ -148,6 +149,9 @@ class Computed<T> extends ObservableBase<T> {
 
   ///Number times of calculator was called
   int get rebuildCount => _rebuildCount;
+
+  ///The current subscription listen on to update computed
+  List<Subscription> get subcriptions => _subscriptions;
 
   ///Temporary pause rebuild value if there are an observable changed
   void pause() {

@@ -20,29 +20,48 @@ class Subscription {
   }
 }
 
+enum ValidateStatus { pending, invalid, valid }
+
 ///A base class for observable should has value and can notify to observers
 abstract class ObservableBase<T> {
   final _callbacks = <Function>[];
   StreamController? _streamer;
   final Validator? _validator;
-  Computed<String?>? _validate;
+  Computed<bool>? _validate;
   String? _error;
-  bool _selfNotify = false;
+  ValidateStatus _status = ValidateStatus.valid;
+  var _skipValidateNotify = false;
 
   ///Create an observable with validator
   ObservableBase(this._validator) {
     if (_validator != null) {
-      _validate = Computed(() => _validator!.validate(value));
-      _validate!.listen((String? v) {
-        if (v != _error) {
-          _error = v;
-          if (_selfNotify) {
-            _selfNotify = false;
-          } else {
-            notify();
+      _validate = Computed(() {
+        var v = _validator!.validate(value);
+        if (v is Future) {
+          if (_status != ValidateStatus.pending) {
+            _status = ValidateStatus.pending;
+            _notifyExcludeValidate();
+          }
+          (v as Future<String?>).then((s) {
+            _error = s;
+            _status =
+                _error == null ? ValidateStatus.valid : ValidateStatus.invalid;
+            _notifyExcludeValidate();
+          });
+        } else {
+          if (_error != v) {
+            _error = v;
+            _status =
+                _error == null ? ValidateStatus.valid : ValidateStatus.invalid;
+            if (!_skipValidateNotify) {
+              _notifyExcludeValidate();
+            }
           }
         }
+        _skipValidateNotify = false;
+        return true;
       });
+      _validate!.changed(() {});
     }
   }
 
@@ -55,12 +74,17 @@ abstract class ObservableBase<T> {
   ///The current value, if value called in a computed context,
   ///it will set Computed is depend on this
   T get value {
-    if (Zone.current['ignoreDependencies'] ?? false) return peek;
+    _addDepend(this);
+    return peek;
+  }
+
+  ///Add the object [obs] into dependency of current computed context
+  void _addDepend(ObservableBase obs) {
+    if (Zone.current['ignoreDependencies'] ?? false) return;
     List<ObservableBase>? depends = Zone.current['computedDepends'];
     if (depends != null &&
-        !depends.contains(this) &&
-        this != Zone.current['computed']) depends.add(this);
-    return peek;
+        !depends.contains(obs) &&
+        obs != Zone.current['computed']) depends.add(obs);
   }
 
   ///Listen on value changed then run callback,
@@ -91,7 +115,7 @@ abstract class ObservableBase<T> {
     if (!hasListener) {
       return;
     }
-    if (hasValidator) _selfNotify = true;
+    if (hasValidator) _skipValidateNotify = true;
     for (var cb in _callbacks) {
       _executeCallback(cb);
     }
@@ -99,9 +123,10 @@ abstract class ObservableBase<T> {
 
   ///Error message if value invalid, otherwise is null
   String? get error {
-    if (!hasValidator) return null;
-    //mark it depend in Computed context and update if has changed
-    _validate!.value;
+    if (hasValidator) {
+      _validate!.peek;
+    }
+    _addDepend(this);
     return _error;
   }
 
@@ -109,11 +134,34 @@ abstract class ObservableBase<T> {
   void setError(String? msg) {
     if (msg == _error) return;
     _error = msg;
-    notify();
+    _status = _error != null ? ValidateStatus.invalid : ValidateStatus.valid;
+    //notify ignore validate again
+    if (hasValidator) {
+      _notifyExcludeValidate();
+    } else {
+      notify();
+    }
+  }
+
+  void _notifyExcludeValidate() {
+    for (var cb in _callbacks) {
+      if (!_validate!.subcriptions.any((el) => el.callback == cb)) {
+        _executeCallback(cb);
+      }
+    }
+  }
+
+  ///Get current status of validating process
+  ValidateStatus get validStatus {
+    if (hasValidator) {
+      _validate!.peek;
+    }
+    _addDepend(this);
+    return _status;
   }
 
   ///Validate status
-  bool get valid => error == null;
+  bool get valid => error == null && validStatus == ValidateStatus.valid;
 
   ///execute callback function, it can has 0, 1, 2 parameters
   void _executeCallback(Function cb) {

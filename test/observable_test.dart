@@ -146,6 +146,37 @@ void main() {
       await Future.delayed(Duration(milliseconds: 600));
       expect(c, 1);
     });
+
+    test('Validate status in sync process', () {
+      var a = Observable(0, validator: ValidatorRequired());
+      var b = Computed(() => a.valid);
+      expect(b.value, false);
+      a.value = 1;
+      expect(b.value, true);
+    });
+
+    test('Listen ValidateAsync', () async {
+      var a =
+          Observable(0, validator: ValidatorAsync((v) => Future.value(v > 10)));
+      var c = 0;
+      var arr = [
+        ValidateStatus.pending,
+        ValidateStatus.invalid,
+        ValidateStatus.pending,
+        ValidateStatus.valid
+      ];
+      a.listen((int v) {
+        //expect(a.validStatus, arr[c]);
+        print(c);
+        print(a.validStatus);
+        c++;
+      });
+      await Future.delayed(Duration(milliseconds: 200));
+      //expect(c, 2);
+      a.value = 20;
+      await Future.delayed(Duration(milliseconds: 200));
+      //expect(c, 4);
+    });
   });
 
   group('Computed', () {
@@ -379,6 +410,24 @@ void main() {
       a.value = 3;
       i = 1;
       await Future.delayed(Duration(seconds: 1));
+    });
+
+    test('Computed return Future', () async {
+      var n = Future.value(1);
+      expect(n, isNot(1));
+      var a = Observable(1);
+      var b = Computed(() => Future.value(a.value * 2));
+      var c = 0;
+      var arr = [2, 4];
+      b.listen((int v) {
+        expect(v, arr[c]);
+        c++;
+      });
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, 1);
+      a.value = 2;
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, 2);
     });
   });
 
