@@ -81,7 +81,11 @@ class Computed<T> extends ObservableBase<T> {
     _running = true;
     var val = runZonedGuarded(calculator, (err, stack) {
       ok = false;
-      if (onError != null) onError!(err, stack);
+      if (onError != null) {
+        onError!(err, stack);
+      } else {
+        print(err);
+      }
     }, zoneValues: {'computedDepends': _depends, 'computed': this});
     if (!ok) return;
 
@@ -98,16 +102,6 @@ class Computed<T> extends ObservableBase<T> {
     _hasChanged = false;
     _running = false;
 
-    if (rebuildCount == 1) {
-      _oldValue = val;
-      _value = val;
-      if (!skipNotify) notify();
-    } else if (val != _value) {
-      _oldValue = _value;
-      _value = val;
-      notify();
-    }
-
     //new subscribes, it there are no depends then it never run again
     for (var dep in _depends) {
       _subscriptions.add(dep.changed(() {
@@ -123,6 +117,17 @@ class Computed<T> extends ObservableBase<T> {
           });
         }
       }));
+    }
+
+    //update value
+    if (rebuildCount == 1) {
+      _oldValue = val;
+      _value = val;
+      if (!skipNotify) notify();
+    } else if (val != _value) {
+      _oldValue = _value;
+      _value = val;
+      notify();
     }
   }
 

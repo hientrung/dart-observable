@@ -27,41 +27,50 @@ abstract class ObservableBase<T> {
   final _callbacks = <Function>[];
   StreamController? _streamer;
   final Validator? _validator;
-  Computed<bool>? _validate;
+  late Computed<int> _validate;
   String? _error;
   ValidateStatus _status = ValidateStatus.valid;
-  var _skipValidateNotify = false;
+  bool _selfNotify = false;
+  Function? _validateFunc;
 
   ///Create an observable with validator
   ObservableBase(this._validator) {
     if (_validator != null) {
-      _validate = Computed(() {
+      var c = 0;
+      _validate = Computed<int>(() {
         var v = _validator!.validate(value);
         if (v is Future) {
           if (_status != ValidateStatus.pending) {
             _status = ValidateStatus.pending;
-            _notifyExcludeValidate();
+            _validatedNotify();
           }
           (v as Future<String?>).then((s) {
             _error = s;
             _status =
                 _error == null ? ValidateStatus.valid : ValidateStatus.invalid;
-            _notifyExcludeValidate();
+            _validatedNotify();
           });
         } else {
           if (_error != v) {
             _error = v;
             _status =
                 _error == null ? ValidateStatus.valid : ValidateStatus.invalid;
-            if (!_skipValidateNotify) {
-              _notifyExcludeValidate();
-            }
+            _validatedNotify();
           }
         }
-        _skipValidateNotify = false;
-        return true;
+        return ++c;
       });
-      _validate!.changed(() {});
+      _validate.listen(() {
+        _validateFunc = null;
+        if (_validate.subcriptions
+            .any((element) => element.observable == this)) {
+          var sub = _validate.subcriptions
+              .firstWhere((element) => element.observable == this);
+          _validateFunc = sub.callback;
+          _callbacks.remove(_validateFunc);
+          _validate.subcriptions.remove(sub);
+        }
+      });
     }
   }
 
@@ -112,10 +121,18 @@ abstract class ObservableBase<T> {
 
   ///Notify to observers are listen on this observable
   void notify() {
+    //fore update validate status instead waiting computed
+    if (_validateFunc != null) {
+      _selfNotify = true;
+      _executeCallback(_validateFunc!);
+      _validate.peek;
+      _selfNotify = false;
+    }
+
     if (!hasListener) {
       return;
     }
-    if (hasValidator) _skipValidateNotify = true;
+
     for (var cb in _callbacks) {
       _executeCallback(cb);
     }
@@ -123,10 +140,7 @@ abstract class ObservableBase<T> {
 
   ///Error message if value invalid, otherwise is null
   String? get error {
-    if (hasValidator) {
-      _validate!.peek;
-    }
-    _addDepend(this);
+    value;
     return _error;
   }
 
@@ -137,26 +151,22 @@ abstract class ObservableBase<T> {
     _status = _error != null ? ValidateStatus.invalid : ValidateStatus.valid;
     //notify ignore validate again
     if (hasValidator) {
-      _notifyExcludeValidate();
+      _validatedNotify();
     } else {
       notify();
     }
   }
 
-  void _notifyExcludeValidate() {
+  void _validatedNotify() {
+    if (_selfNotify) return;
     for (var cb in _callbacks) {
-      if (!_validate!.subcriptions.any((el) => el.callback == cb)) {
-        _executeCallback(cb);
-      }
+      _executeCallback(cb);
     }
   }
 
   ///Get current status of validating process
   ValidateStatus get validStatus {
-    if (hasValidator) {
-      _validate!.peek;
-    }
-    _addDepend(this);
+    value;
     return _status;
   }
 
@@ -203,8 +213,9 @@ abstract class ObservableBase<T> {
   void dispose() {
     _streamer?.close();
     _streamer = null;
-    _validate?.dispose();
-    _validate = null;
+    if (hasValidator) {
+      _validate.dispose();
+    }
     _callbacks.clear();
   }
 

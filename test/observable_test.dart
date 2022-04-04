@@ -155,31 +155,40 @@ void main() {
       expect(b.value, true);
     });
 
-    test('Listen ValidateAsync', () async {
+    test('Sequence ValidateAsync', () async {
       var a =
           Observable(0, validator: ValidatorAsync((v) => Future.value(v > 10)));
       var c = 0;
       var arr = [
-        ValidateStatus.pending,
-        ValidateStatus.invalid,
-        ValidateStatus.pending,
-        ValidateStatus.valid
+        ValidateStatus.pending, //on listen
+        ValidateStatus.invalid, //after validate
+        ValidateStatus.pending, //change value
+        ValidateStatus.valid //after validate
       ];
       a.listen((int v) {
-        //expect(a.validStatus, arr[c]);
-        print(c);
-        print(a.validStatus);
+        expect(a.validStatus, arr[c]);
         c++;
       });
       await Future.delayed(Duration(milliseconds: 200));
-      //expect(c, 2);
+      expect(c, 2);
       a.value = 20;
       await Future.delayed(Duration(milliseconds: 200));
-      //expect(c, 4);
+      expect(c, 4);
     });
   });
 
   group('Computed', () {
+    test('Listen', () async {
+      var a = Observable(1);
+      var b = Computed(() => a.value);
+      var c = 0;
+      b.listen((v) => c = v);
+      expect(c, a.value);
+      a.value = 2;
+      expect(c, lessThan(a.value));
+      await Future.delayed(Duration(milliseconds: 100));
+      expect(c, a.value);
+    });
     test('only computed if access value', () {
       var a = Observable(1);
       var b = Computed(() {
@@ -428,6 +437,27 @@ void main() {
       a.value = 2;
       await Future.delayed(Duration(milliseconds: 100));
       expect(c, 2);
+    });
+
+    test('Sequence ValidateAsync', () async {
+      var a = Observable(0);
+      var b = Computed(() => a.value * 2,
+          validator: ValidatorAsync((v) => Future.value(v > 10)));
+      var c = 0;
+      var arr = [
+        ValidateStatus.invalid, //on listen
+        ValidateStatus.pending, //change value
+        ValidateStatus.valid //after validate
+      ];
+      b.listen((int v) {
+        expect(b.validStatus, arr[c]);
+        c++;
+      });
+      await Future.delayed(Duration(milliseconds: 200));
+      expect(c, 1);
+      a.value = 20;
+      await Future.delayed(Duration(milliseconds: 200));
+      expect(c, 3);
     });
   });
 
