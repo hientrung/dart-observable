@@ -1,5 +1,14 @@
 # CHANGE LOG
 
+## 1.3.0
+
+Feature asynchronous validation
+
+- new class `ValidationAsync`
+- new property `validStatus` in observable
+
+Computation function used in Computed can return a Future
+
 ## 1.2.3
 
 Add callable class.

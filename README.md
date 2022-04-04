@@ -77,8 +77,9 @@ Built-in validate:
 - all: combine and check all validators
 - least: combine and check all validators but it stopped at the first invalid
 - not: negative a validator
+- async: validate value by an async process
 
-Observable has a property **valid** **error**, they're observables value of validation status.
+Observable has a property **valid** **error** **validStatus**, they're observables value of validation status.
 
 Validator also has features:
 
