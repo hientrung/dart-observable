@@ -25,7 +25,7 @@ enum ValidateStatus { pending, invalid, valid }
 ///A base class for observable should has value and can notify to observers
 abstract class ObservableBase<T> {
   final _callbacks = <Function>[];
-  StreamController? _streamer;
+  StreamController<T>? _streamer;
   final Validator? _validator;
   late Computed<int> _validate;
   String? _error;
@@ -192,9 +192,9 @@ abstract class ObservableBase<T> {
 
   ///Create a stream to listen value changes,
   ///it should call [dispose] to close stream when it is no longer needed
-  Stream get stream {
+  Stream<T> get stream {
     if (_streamer == null) {
-      _streamer = StreamController.broadcast(sync: true);
+      _streamer = StreamController<T>.broadcast(sync: true);
       listen(() => _streamer!.add(peek));
     }
     return _streamer!.stream;
