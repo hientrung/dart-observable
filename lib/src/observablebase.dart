@@ -32,6 +32,7 @@ abstract class ObservableBase<T> {
   ValidateStatus _status = ValidateStatus.valid;
   bool _selfNotify = false;
   Function? _validateFunc;
+  Subscription? _streamListener;
 
   ///Create an observable with validator
   ObservableBase(this._validator) {
@@ -190,13 +191,15 @@ abstract class ObservableBase<T> {
     }
   }
 
-  ///Create a stream to listen value changes,
-  ///it should call [dispose] to close stream when it is no longer needed
+  ///Create a broadcast stream to listen value changes.
+  ///
+  ///It also push current value to stream in the first time listen on stream.
+  ///Should call [dispose] to close stream when it is no longer needed
   Stream<T> get stream {
-    if (_streamer == null) {
-      _streamer = StreamController<T>.broadcast(sync: true);
-      listen(() => _streamer!.add(peek));
-    }
+    _streamer ??= StreamController<T>.broadcast(
+      onListen: () => _streamListener = listen(() => _streamer!.add(peek)),
+      onCancel: () => _streamListener?.dispose(),
+    );
     return _streamer!.stream;
   }
 

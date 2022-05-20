@@ -89,9 +89,8 @@ class Computed<T> extends ObservableBase<T> {
     }, zoneValues: {'computedDepends': _depends, 'computed': this});
     if (!ok) return;
 
-    if (val is Future) {
-      var v = val as Future<T>;
-      v.then((_v) => _setValue(_v, skipNotify));
+    if (val is Future<T>) {
+      val.then((v) => _setValue(v, skipNotify));
     } else {
       _setValue(val as T, skipNotify);
     }

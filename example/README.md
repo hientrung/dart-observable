@@ -36,7 +36,6 @@ class _ObserverWidgetState<T> extends State<ObserverWidget<T>> {
 
   @override
   void didUpdateWidget(ObserverWidget<T> oldWidget) {
-    //print('update');
     super.didUpdateWidget(oldWidget);
     if (oldWidget.observable != widget.observable) {
       value = widget.observable.value;

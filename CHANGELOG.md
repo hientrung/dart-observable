@@ -1,5 +1,9 @@
 # CHANGE LOG
 
+## 1.3.1
+
+Update stream return by observable. It will notify current value in first time listen on stream.
+
 ## 1.3.0
 
 Feature asynchronous validation

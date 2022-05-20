@@ -6,7 +6,7 @@ An observable, computed objects written in Dart with built-in validation
 
 ```yaml
 dependencies:
-  obsobject: ^1.2.0
+  obsobject: ^1.3.0
 ```
 
 # Observable
@@ -113,5 +113,21 @@ email.listen(() {
   }
 });
 ```
+
+# Flutter widget
+
+- Create a statefull widget to update UI when observable change value, take look a sample [here](example/README.md)
+- Or use StreamBuilder with observable.stream
+
+  ```dart
+  //observable defined in model layer or global
+  final count = Observable(0);
+
+  //in build context of widget
+  StreamBuilder<int>(
+    builder: ...,
+    stream: count.stream,
+  )
+  ```
 
 ### View more details in [Wiki](https://github.com/hientrung/dart-observable/wiki), [API](https://pub.dev/documentation/obsobject/latest/)
